@@ -18,7 +18,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Meeting } from '@/content';
-import { getCalEntries } from '@/lib/calendar-utils';
+import { getCalEntries, openOptionsPage } from '@/lib/extension-utils';
 import { Loader2, RefreshCcw, Send } from 'lucide-react';
 import { ReactElement, ReactNode, useEffect, useState, useTransition } from 'react';
 
@@ -96,6 +96,14 @@ function App() {
                </div>
             </CardContent>
             <CardFooter className='justify-end pt-4'>
+               <Button
+                  variant={'secondary'}
+                  onClick={() => {
+                     openOptionsPage();
+                  }}
+               >
+                  Settings
+               </Button>
                <Button
                   onClick={async () => {
                      setUpdating(true);

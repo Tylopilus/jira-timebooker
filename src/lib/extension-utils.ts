@@ -1,3 +1,4 @@
+import { SettingsFormValues } from '@/options/Options';
 import { Meeting } from '../content';
 
 export function getCalEntries(cb: (response: Meeting[]) => void) {
@@ -128,4 +129,41 @@ export function getCalEntries(cb: (response: Meeting[]) => void) {
       return;
    }
    chrome.runtime.sendMessage('getCalEntries', cb);
+}
+
+export function openOptionsPage() {
+   if (import.meta.env.MODE === 'testing') {
+      window.location.href = '/options.html';
+      return;
+   }
+   chrome.runtime.openOptionsPage();
+}
+
+async function testConnection(data: SettingsFormValues) {
+   try {
+      const test = await fetch(`${data.jiraBaseUrl}/rest/api/3/issue/CWAL-1`, {
+         headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Basic ${btoa(`${data.email}:${data.jiraToken}`)}`,
+            Accept: 'application/json',
+            'X-Atlassian-Token': 'no-check',
+         },
+      });
+      if (test.status !== 200) {
+         throw new Error('Could not connect to Jira');
+      }
+   } catch (e) {
+      throw new Error('Could not connect to Jira');
+   }
+}
+export async function storeData(data: SettingsFormValues) {
+   try {
+      await testConnection(data);
+      if (import.meta.env.MODE === 'testing') {
+         return;
+      }
+      await chrome.storage.sync.set(data);
+   } catch (e) {
+      throw e;
+   }
 }
