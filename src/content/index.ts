@@ -10,6 +10,7 @@ export type Meeting = {
    title: string;
    ticket: string;
    booked: boolean;
+   pending: boolean;
 };
 function getMeetings(): Promise<Meeting[]> {
    return new Promise((resolve, reject) => {
@@ -26,7 +27,17 @@ function getMeetings(): Promise<Meeting[]> {
          const id = crypto.randomUUID();
          const ticketMatch = title.match(/\w+-\d+\s/i);
          const ticket = ticketMatch ? ticketMatch[0].trim() : 'CWAL-1';
-         return { id, startTime, endTime, start, end, title, ticket, booked: false };
+         return {
+            id,
+            startTime,
+            endTime,
+            start,
+            end,
+            title,
+            ticket,
+            booked: false,
+            pending: false,
+         };
       });
       resolve(meetings);
    });

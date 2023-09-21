@@ -141,7 +141,7 @@ export function openOptionsPage() {
 
 async function testConnection(data: SettingsFormValues) {
    try {
-      const test = await fetch(`${data.jiraBaseUrl}/rest/api/3/issue/CWAL-1`, {
+      const test = await fetch(`${data.jiraBaseUrl}/rest/api/3/issue/${data.jiraDefaultTicket}`, {
          headers: {
             'Content-Type': 'application/json',
             Authorization: `Basic ${btoa(`${data.email}:${data.jiraToken}`)}`,

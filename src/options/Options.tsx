@@ -41,15 +41,22 @@ const settingsFormSchema = z.object({
    email: z.string().email({ message: 'Please enter a valid email' }),
    jiraToken: z.string().min(1, { message: 'Please enter a valid token' }),
    jiraBaseUrl: z.string().url({ message: 'Please enter a valid url' }),
+   jiraDefaultTicket: z.string().regex(/\w-\d/i, { message: 'Please enter a valid ticket' }),
 });
 
 export type SettingsFormValues = z.infer<typeof settingsFormSchema>;
 const defaultValues = async (): Promise<SettingsFormValues> => {
-   const settings = await chrome.storage.sync.get(['email', 'jiraToken', 'jiraBaseUrl']);
+   const settings = await chrome.storage.sync.get([
+      'email',
+      'jiraToken',
+      'jiraBaseUrl',
+      'jiraDefaultTicket',
+   ]);
    return {
       email: settings?.email || '',
       jiraToken: settings?.jiraToken || '',
       jiraBaseUrl: settings?.jiraBaseUrl || '',
+      jiraDefaultTicket: settings?.jiraDefaultTicket || '',
    };
 };
 function SettingsForm() {
@@ -128,6 +135,22 @@ function SettingsForm() {
                         </FormControl>
                         <FormDescription>
                            This is the base url of your Jira instance.
+                        </FormDescription>
+                        <FormMessage />
+                     </FormItem>
+                  )}
+               />
+               <FormField
+                  control={form.control}
+                  name='jiraDefaultTicket'
+                  render={({ field }) => (
+                     <FormItem>
+                        <FormLabel>Jira default ticket</FormLabel>
+                        <FormControl>
+                           <Input placeholder='Jira default issue id' {...field} />
+                        </FormControl>
+                        <FormDescription>
+                           This is the default issue id to book on if no issue id could be inferred.
                         </FormDescription>
                         <FormMessage />
                      </FormItem>

@@ -11,16 +11,18 @@ import {
    Command,
    CommandEmpty,
    CommandGroup,
-   CommandInput,
    CommandItem,
    CommandList,
 } from '@/components/ui/command';
+import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Meeting } from '@/content';
 import { getCalEntries, openOptionsPage } from '@/lib/extension-utils';
-import { Loader2, RefreshCcw, Send } from 'lucide-react';
-import { ReactElement, ReactNode, useEffect, useState, useTransition } from 'react';
+import { useJiraSearch } from '@/lib/jira';
+import { useDebounce } from '@/lib/utils';
+import { Loader2, RefreshCcw, Search, Send } from 'lucide-react';
+import { ReactElement, useEffect, useState, useTransition } from 'react';
 
 function App() {
    const [items, setItems] = useState<Meeting[]>();
@@ -32,31 +34,36 @@ function App() {
    }, []);
 
    async function bookMeeting(meeting: Meeting): Promise<void> {
-      await new Promise((resolve, reject) => {
-         // setTimeout(() => reject('error'), 1000);
-         setTimeout(
-            () =>
-               Math.random() > 0.5
-                  ? resolve(
-                       setItems((items) =>
-                          items?.map((item) => {
-                             if (item.id === meeting.id) {
-                                return meeting;
-                             }
-                             return item;
-                          }),
-                       ),
-                    )
-                  : reject('error'),
-            1000,
-         );
-      });
+      if (import.meta.env.MODE === 'testing') {
+         await new Promise((resolve, reject) => {
+            setTimeout(
+               () =>
+                  resolve(
+                     setItems((items) =>
+                        items?.map((item) => {
+                           if (item.id === meeting.id) {
+                              return meeting;
+                           }
+                           return item;
+                        }),
+                     ),
+                  ),
+               1000,
+            );
+         });
+      }
    }
-   async function updateMeeting(meeting: Meeting) {
-      try {
-         await bookMeeting(meeting);
-      } catch (error) {
-         console.log(error);
+   async function updateMeeting(meeting: Meeting, update?: Partial<Meeting>) {
+      setItems((items) =>
+         items?.map((item) => {
+            if (item.id === meeting.id) {
+               return { ...meeting, ...update };
+            }
+            return item;
+         }),
+      );
+      if (update?.booked) {
+         return bookMeeting({ ...meeting, ...update, pending: false });
       }
    }
    return (
@@ -108,8 +115,10 @@ function App() {
                   onClick={async () => {
                      setUpdating(true);
                      await Promise.allSettled(
-                        items?.map((item) =>
-                           item.booked ? null : bookMeeting({ ...item, booked: true }),
+                        items?.map((meeting) =>
+                           meeting.booked
+                              ? null
+                              : updateMeeting(meeting, { booked: true, pending: true }),
                         ) ?? [],
                      );
                      startTransition(() => setUpdating(false));
@@ -130,10 +139,15 @@ function IssueEntry({
    updateMeeting,
 }: {
    meeting: Meeting;
-   updateMeeting: (meeting: Meeting) => Promise<void>;
+   updateMeeting: (meeting: Meeting, update?: Partial<Meeting>) => Promise<void>;
 }): ReactElement {
+   const [open, setOpen] = useState(false);
    const [isUpdating, setUpdating] = useState(false);
    const [, startTransition] = useTransition();
+
+   const [search, setSearch] = useState<string>(meeting.ticket);
+   const debouncedValue = useDebounce<string>(search, 500);
+   const { isFetching, isError, data, error } = useJiraSearch(debouncedValue);
 
    return (
       <div className='flex justify-between'>
@@ -144,23 +158,45 @@ function IssueEntry({
             </p>
          </div>
          <div className='flex items-center gap-2'>
-            <Popover>
+            <Popover open={open} onOpenChange={setOpen}>
                <PopoverTrigger asChild>
                   <Button
                      variant='outline'
                      disabled={meeting.booked}
-                     className='w-[120px] justify-center'
+                     className='w-[140px] justify-center'
                   >
                      {meeting.ticket}
                   </Button>
                </PopoverTrigger>
                <PopoverContent className='p-0' side='bottom' align='start'>
                   <Command>
-                     <CommandInput placeholder='Search issue...' />
+                     <div className='flex items-center border-b px-3'>
+                        <Search className='mr-2 h-4 w-4 shrink-0 opacity-50' />
+                        <Input
+                           className={
+                              'flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 border-none focus-visible:ring-0'
+                           }
+                           value={search}
+                           onChange={(e) => setSearch(e.target.value)}
+                           placeholder='Search issue...'
+                        />
+                        {isFetching && <Loader2 className='h-4 w-4 animate-spin' />}
+                     </div>
                      <CommandList>
                         <CommandEmpty>No results found.</CommandEmpty>
                         <CommandGroup>
-                           <CommandItem>test</CommandItem>
+                           {data &&
+                              data.map((item: any) => (
+                                 <CommandItem
+                                    key={item.id}
+                                    onSelect={() => {
+                                       updateMeeting(meeting, { ticket: item.key });
+                                       setOpen(false);
+                                    }}
+                                 >
+                                    {item.key} - {item.summary}
+                                 </CommandItem>
+                              ))}
                         </CommandGroup>
                      </CommandList>
                   </Command>
@@ -174,11 +210,11 @@ function IssueEntry({
                      disabled={meeting.booked || isUpdating}
                      onClick={async () => {
                         setUpdating(true);
-                        await updateMeeting({ ...meeting, booked: true });
+                        await updateMeeting(meeting, { booked: true, pending: true });
                         startTransition(() => setUpdating(false));
                      }}
                   >
-                     {isUpdating ? (
+                     {meeting.pending ? (
                         <Loader2 className='h-4 w-4 animate-spin' />
                      ) : (
                         <Send className='h-4 w-4' />
