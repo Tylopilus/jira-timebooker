@@ -2,15 +2,7 @@ import { SettingsFormValues } from '@/options/Options';
 import { useQuery } from '@tanstack/react-query';
 
 async function getJiraOptions(): Promise<SettingsFormValues> {
-   // if (import.meta.env.MODE === 'testing') {
-   //    return {
-   //       email: '',
-   //       jiraBaseUrl: '',
-   //       jiraToken: '',
-   //       jiraDefaultTicket: '',
-   //    };
-   // }
-   const { email, jiraBaseUrl, jiraToken, jiraDefaultTicket } = await chrome?.storage?.sync?.get([
+   const { email, jiraBaseUrl, jiraToken, jiraDefaultTicket } = await chrome.storage.sync.get([
       'email',
       'jiraBaseUrl',
       'jiraToken',
@@ -26,32 +18,19 @@ type JiraIssue = {
       summary: string;
    };
 };
-export async function getLastUsedIssues(): Promise<Array<JiraIssue>> {
-   if (import.meta.env.MODE === 'testing') {
-      return [
-         {
-            id: '0',
-            key: 'CLA-0',
-            fields: {
-               summary: 'No results found',
-            },
-         },
-         {
-            id: '1',
-            key: 'CLA-1',
-            fields: {
-               summary: 'results found',
-            },
-         },
-      ];
-   }
 
+export async function getLastUsedIssues(): Promise<Array<JiraIssue>> {
    return chrome.storage.local.get(['lastUsedIssues']).then((res) => res.lastUsedIssues || []);
 }
 
-export async function addLastUsedIssue(issue: JiraIssue) {
+export async function clearLastUsedIssues() {
+   chrome.storage.local.set({ lastUsedIssues: [] });
+}
+
+export async function addLastUsedIssue(issue: Pick<JiraIssue, 'key'>) {
    const lastUsedIssues = await getLastUsedIssues();
-   const newIssues = [issue, ...lastUsedIssues.filter((i) => i.id !== issue.id)];
+   const jiraIssue = await searchJiraIssue({ query: issue.key });
+   const newIssues = [jiraIssue[0], ...lastUsedIssues.filter((i) => i.key !== jiraIssue[0].key)];
    return chrome.storage.local.set({ lastUsedIssues: newIssues });
 }
 
@@ -61,7 +40,7 @@ type SearchProps = {
 export async function searchJira(_props: SearchProps): Promise<Array<JiraIssue>> {
    const jiraOptions = await getJiraOptions();
    const props: SearchProps = { ..._props, ...jiraOptions };
-   if (props.query === '') {
+   if (!props.query) {
       return getLastUsedIssues();
    }
    const searchParam = props.query.match(/\w+-\d+/i)
@@ -126,12 +105,12 @@ export async function bookTimeOnIssue(props: BookTimeOnIssueProps) {
    throw new Error(await res.json());
 }
 
-export async function searchJiraIssue(props: SearchProps) {
+export async function searchJiraIssue(props: SearchProps): Promise<Array<JiraIssue>> {
    const issues = await searchJira(props);
    const res = issues.map((issue: any) => ({
       id: issue.id,
       key: issue.key,
-      summary: issue.fields.summary,
+      fields: { summary: issue.fields.summary },
    }));
    return res;
 }

@@ -1,3 +1,5 @@
+import { getIssueForMeeting } from '@/lib/extension-utils';
+
 console.info('chrome-ext template-react-ts content script');
 
 export {};
@@ -12,12 +14,13 @@ export type Meeting = {
    booked: boolean;
    pending: boolean;
 };
-function getMeetings(): Promise<Meeting[]> {
-   return new Promise((resolve, reject) => {
-      const meetingElements = [...document.querySelectorAll('div[role=button][class^=root]')];
-      if (!meetingElements.length) reject('No meetings found');
 
-      const meetings: Meeting[] = meetingElements.map((el): Meeting => {
+async function getMeetings(): Promise<Meeting[]> {
+   const meetingElements = [...document.querySelectorAll('div[role=button][class^=root]')];
+   if (!meetingElements.length) throw new Error('No meetings found');
+
+   const meetings: Meeting[] = await Promise.all(
+      meetingElements.map(async (el): Promise<Meeting> => {
          const matchedLabel = el.ariaLabel?.match(/(\d{2}\:\d{2}).*(\d{2}\:\d{2})/i);
          const start = matchedLabel ? matchedLabel[1] : '00:00';
          const end = matchedLabel ? matchedLabel[2] : '00:00';
@@ -26,7 +29,8 @@ function getMeetings(): Promise<Meeting[]> {
          const title = el.getAttribute('title')?.split('\n')[0].trim() ?? 'No title';
          const id = crypto.randomUUID();
          const ticketMatch = title.match(/\w+-\d+\s/i);
-         const ticket = ticketMatch ? ticketMatch[0].trim() : 'CWAL-1';
+         const issueForMeeting = await getIssueForMeeting(title);
+         const ticket = ticketMatch ? ticketMatch[0].trim() : issueForMeeting;
          return {
             id,
             startTime,
@@ -38,12 +42,15 @@ function getMeetings(): Promise<Meeting[]> {
             booked: false,
             pending: false,
          };
-      });
-      resolve(meetings);
-   });
+      }),
+   );
+   return meetings;
 }
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
    if (message === 'getCalEntries') {
-      getMeetings().then(sendResponse).catch(console.error);
+      getMeetings().then((meetings) => {
+         sendResponse(meetings);
+      });
    }
+   return true;
 });

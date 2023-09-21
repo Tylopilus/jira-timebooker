@@ -18,12 +18,11 @@ import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Meeting } from '@/content';
-import { getCalEntries, openOptionsPage } from '@/lib/extension-utils';
-import { addLastUsedIssue, bookTimeOnIssue, getLastUsedIssues, useJiraSearch } from '@/lib/jira';
+import { clearBookedMeetings, getCalEntries, storeIssueForMeeting } from '@/lib/extension-utils';
+import { addLastUsedIssue, bookTimeOnIssue, clearLastUsedIssues, useJiraSearch } from '@/lib/jira';
 import { useDebounce } from '@/lib/utils';
 import { Loader2, RefreshCcw, Search, Send } from 'lucide-react';
 import { ReactElement, useEffect, useState, useTransition } from 'react';
-import { set } from 'react-hook-form';
 
 function App() {
    const [items, setItems] = useState<Meeting[]>();
@@ -37,18 +36,18 @@ function App() {
    async function bookMeeting(meeting: Meeting): Promise<void> {
       updateMeeting(meeting, { pending: true });
       try {
-         await bookTimeOnIssue({
-            issueId: meeting.ticket,
-            startTime: meeting.startTime,
-            endTime: meeting.endTime,
-            title: meeting.title,
-         });
+         // await bookTimeOnIssue({
+         //    issueId: meeting.ticket,
+         //    startTime: meeting.startTime,
+         //    endTime: meeting.endTime,
+         //    title: meeting.title,
+         // });
          updateMeeting(meeting, { pending: false, booked: true });
          addLastUsedIssue({
-            id: meeting.id,
             key: meeting.ticket,
-            fields: { summary: meeting.title },
          });
+
+         storeIssueForMeeting(meeting.title, meeting.ticket);
       } catch (e) {
          const { message } = e instanceof Error ? e : { message: 'unknown error' };
          console.log('unable to book meeting', message);
@@ -110,7 +109,8 @@ function App() {
                <Button
                   variant={'secondary'}
                   onClick={() => {
-                     openOptionsPage();
+                     clearLastUsedIssues();
+                     clearBookedMeetings();
                   }}
                >
                   Settings
@@ -189,7 +189,7 @@ function IssueEntry({
                         <CommandEmpty>No results found.</CommandEmpty>
                         <CommandGroup>
                            {data &&
-                              data.map((item: any) => (
+                              data.map((item) => (
                                  <CommandItem
                                     key={item.id}
                                     onSelect={() => {
@@ -197,7 +197,7 @@ function IssueEntry({
                                        setOpen(false);
                                     }}
                                  >
-                                    {item.key} - {item.summary}
+                                    {item.key} - {item.fields.summary}
                                  </CommandItem>
                               ))}
                         </CommandGroup>
