@@ -36,12 +36,12 @@ function App() {
    async function bookMeeting(meeting: Meeting): Promise<void> {
       updateMeeting(meeting, { pending: true });
       try {
-         // await bookTimeOnIssue({
-         //    issueId: meeting.ticket,
-         //    startTime: meeting.startTime,
-         //    endTime: meeting.endTime,
-         //    title: meeting.title,
-         // });
+         await bookTimeOnIssue({
+            issueId: meeting.ticket,
+            startTime: meeting.startTime,
+            endTime: meeting.endTime,
+            title: meeting.title,
+         });
          updateMeeting(meeting, { pending: false, booked: true });
          addLastUsedIssue({
             key: meeting.ticket,
