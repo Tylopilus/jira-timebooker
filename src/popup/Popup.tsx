@@ -106,15 +106,15 @@ function App() {
                </div>
             </CardContent>
             <CardFooter className='justify-end pt-4'>
-               <Button
+               {/* <Button
                   variant={'secondary'}
                   onClick={() => {
                      clearLastUsedIssues();
                      clearBookedMeetings();
                   }}
                >
-                  Settings
-               </Button>
+                  Reset all
+               </Button> */}
                <Button
                   onClick={async () => {
                      setUpdating(true);
@@ -150,7 +150,7 @@ function IssueEntry({
 
    const [search, setSearch] = useState<string>(meeting.ticket);
    const debouncedValue = useDebounce<string>(search, 500);
-   const { isFetching, isError, data, error } = useJiraSearch(debouncedValue);
+   const { isFetching, data } = useJiraSearch(debouncedValue);
 
    return (
       <div className='flex justify-between'>

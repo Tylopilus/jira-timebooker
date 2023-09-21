@@ -45,7 +45,6 @@ export async function storeData(data: SettingsFormValues) {
 export async function getIssueForMeeting(meeting: string) {
    try {
       const { bookedMeetings } = await chrome.storage.sync.get(['bookedMeetings']);
-      console.log(bookedMeetings);
       if (bookedMeetings && Object.keys(bookedMeetings).includes(meeting)) {
          return bookedMeetings[meeting];
       }
@@ -59,9 +58,7 @@ export async function getIssueForMeeting(meeting: string) {
 export async function storeIssueForMeeting(meeting: string, issue: string) {
    const { bookedMeetings } = await chrome.storage.sync.get('bookedMeetings');
    bookedMeetings[meeting] = issue;
-   const res = await chrome.storage.sync.set({ bookedMeetings });
-
-   console.log(res);
+   await chrome.storage.sync.set({ bookedMeetings });
 }
 
 export async function clearBookedMeetings() {
