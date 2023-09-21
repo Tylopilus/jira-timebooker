@@ -19,10 +19,11 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Meeting } from '@/content';
 import { getCalEntries, openOptionsPage } from '@/lib/extension-utils';
-import { useJiraSearch } from '@/lib/jira';
+import { addLastUsedIssue, bookTimeOnIssue, getLastUsedIssues, useJiraSearch } from '@/lib/jira';
 import { useDebounce } from '@/lib/utils';
 import { Loader2, RefreshCcw, Search, Send } from 'lucide-react';
 import { ReactElement, useEffect, useState, useTransition } from 'react';
+import { set } from 'react-hook-form';
 
 function App() {
    const [items, setItems] = useState<Meeting[]>();
@@ -34,23 +35,24 @@ function App() {
    }, []);
 
    async function bookMeeting(meeting: Meeting): Promise<void> {
-      if (import.meta.env.MODE === 'testing') {
-         await new Promise((resolve, reject) => {
-            setTimeout(
-               () =>
-                  resolve(
-                     setItems((items) =>
-                        items?.map((item) => {
-                           if (item.id === meeting.id) {
-                              return meeting;
-                           }
-                           return item;
-                        }),
-                     ),
-                  ),
-               1000,
-            );
+      updateMeeting(meeting, { pending: true });
+      try {
+         await bookTimeOnIssue({
+            issueId: meeting.ticket,
+            startTime: meeting.startTime,
+            endTime: meeting.endTime,
+            title: meeting.title,
          });
+         updateMeeting(meeting, { pending: false, booked: true });
+         addLastUsedIssue({
+            id: meeting.id,
+            key: meeting.ticket,
+            fields: { summary: meeting.title },
+         });
+      } catch (e) {
+         const { message } = e instanceof Error ? e : { message: 'unknown error' };
+         console.log('unable to book meeting', message);
+         updateMeeting(meeting, { pending: false, booked: false });
       }
    }
    async function updateMeeting(meeting: Meeting, update?: Partial<Meeting>) {
@@ -62,9 +64,6 @@ function App() {
             return item;
          }),
       );
-      if (update?.booked) {
-         return bookMeeting({ ...meeting, ...update, pending: false });
-      }
    }
    return (
       <main className='mx-auto px-2 min-w-[600px] my-4 max-w-[600px]'>
@@ -98,7 +97,12 @@ function App() {
             <CardContent className='p-4 pr-2'>
                <div className='space-y-6 max-h-[380px] overflow-y-auto'>
                   {items?.map((item) => (
-                     <IssueEntry meeting={item} updateMeeting={updateMeeting} key={item.id} />
+                     <IssueEntry
+                        meeting={item}
+                        updateMeeting={updateMeeting}
+                        bookMeeting={bookMeeting}
+                        key={item.id}
+                     />
                   ))}
                </div>
             </CardContent>
@@ -115,11 +119,8 @@ function App() {
                   onClick={async () => {
                      setUpdating(true);
                      await Promise.allSettled(
-                        items?.map((meeting) =>
-                           meeting.booked
-                              ? null
-                              : updateMeeting(meeting, { booked: true, pending: true }),
-                        ) ?? [],
+                        items?.map((meeting) => (meeting.booked ? null : bookMeeting(meeting))) ??
+                           [],
                      );
                      startTransition(() => setUpdating(false));
                   }}
@@ -137,9 +138,11 @@ export default App;
 function IssueEntry({
    meeting,
    updateMeeting,
+   bookMeeting,
 }: {
    meeting: Meeting;
    updateMeeting: (meeting: Meeting, update?: Partial<Meeting>) => Promise<void>;
+   bookMeeting: (meeting: Meeting) => Promise<void>;
 }): ReactElement {
    const [open, setOpen] = useState(false);
    const [isUpdating, setUpdating] = useState(false);
@@ -210,7 +213,7 @@ function IssueEntry({
                      disabled={meeting.booked || isUpdating}
                      onClick={async () => {
                         setUpdating(true);
-                        await updateMeeting(meeting, { booked: true, pending: true });
+                        await bookMeeting(meeting);
                         startTransition(() => setUpdating(false));
                      }}
                   >

@@ -19,7 +19,14 @@ async function getJiraOptions(): Promise<SettingsFormValues> {
    return { email, jiraBaseUrl, jiraToken, jiraDefaultTicket };
 }
 
-export async function getLastUsedIssues() {
+type JiraIssue = {
+   id: string;
+   key: string;
+   fields: {
+      summary: string;
+   };
+};
+export async function getLastUsedIssues(): Promise<Array<JiraIssue>> {
    if (import.meta.env.MODE === 'testing') {
       return [
          {
@@ -42,10 +49,16 @@ export async function getLastUsedIssues() {
    return chrome.storage.local.get(['lastUsedIssues']).then((res) => res.lastUsedIssues || []);
 }
 
+export async function addLastUsedIssue(issue: JiraIssue) {
+   const lastUsedIssues = await getLastUsedIssues();
+   const newIssues = [issue, ...lastUsedIssues.filter((i) => i.id !== issue.id)];
+   return chrome.storage.local.set({ lastUsedIssues: newIssues });
+}
+
 type SearchProps = {
    query: string;
 } & Partial<SettingsFormValues>;
-export async function searchJira(_props: SearchProps) {
+export async function searchJira(_props: SearchProps): Promise<Array<JiraIssue>> {
    const jiraOptions = await getJiraOptions();
    const props: SearchProps = { ..._props, ...jiraOptions };
    if (props.query === '') {
@@ -73,23 +86,44 @@ type BookTimeOnIssueProps = {
    issueId: string;
    startTime: string;
    endTime: string;
-} & SettingsFormValues;
+   title: string;
+};
 
 export async function bookTimeOnIssue(props: BookTimeOnIssueProps) {
-   return fetch(`https://${props.jiraBaseUrl}/rest/api/3/issue/${props.issueId}/worklog`, {
+   const jiraOptions = await getJiraOptions();
+   const res = await fetch(`${jiraOptions.jiraBaseUrl}/rest/api/3/issue/${props.issueId}/worklog`, {
       method: 'POST',
       headers: {
          'Content-Type': 'application/json',
-         Authorization: `Basic ${btoa(`${props.email}:${props.jiraToken}`)}`,
+         Authorization: `Basic ${btoa(`${jiraOptions.email}:${jiraOptions.jiraToken}`)}`,
          Accept: 'application/json',
          'X-Atlassian-Token': 'no-check',
       },
       body: JSON.stringify({
-         started: props.startTime,
+         comment: {
+            content: [
+               {
+                  content: [
+                     {
+                        text: props.title,
+                        type: 'text',
+                     },
+                  ],
+                  type: 'paragraph',
+               },
+            ],
+            type: 'doc',
+            version: 1,
+         },
+         started: props.startTime.replace('Z', '+0000'),
          timeSpentSeconds:
             (new Date(props.endTime).getTime() - new Date(props.startTime).getTime()) / 1000,
       }),
    });
+   if (res.status === 201) {
+      return res.json();
+   }
+   throw new Error(await res.json());
 }
 
 export async function searchJiraIssue(props: SearchProps) {
