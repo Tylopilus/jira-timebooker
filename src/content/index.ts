@@ -22,10 +22,12 @@ async function getMeetings(): Promise<Meeting[]> {
    const meetings: Meeting[] = await Promise.all(
       meetingElements.map(async (el): Promise<Meeting> => {
          const matchedLabel = el.ariaLabel?.match(/(\d{2}\:\d{2}).*(\d{2}\:\d{2})/i);
+         const date =
+            document.querySelector('.YjxmP.zVmbM')?.textContent || new Date().toDateString();
          const start = matchedLabel ? matchedLabel[1] : '00:00';
          const end = matchedLabel ? matchedLabel[2] : '00:00';
-         const startTime = new Date([new Date().toDateString(), start].join(' ')).toISOString();
-         const endTime = new Date([new Date().toDateString(), end].join(' ')).toISOString();
+         const startTime = new Date([date, start].join(' ')).toISOString();
+         const endTime = new Date([date, end].join(' ')).toISOString();
          const title = el.getAttribute('title')?.split('\n')[0].trim() ?? 'No title';
          const id = crypto.randomUUID();
          const ticketMatch = title.match(/\w+-\d+\s/i);
