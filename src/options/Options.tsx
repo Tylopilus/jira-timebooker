@@ -38,8 +38,8 @@ function App() {
 
 export default App;
 const settingsFormSchema = z.object({
-   email: z.string().email({ message: 'Please enter a valid email' }),
-   jiraToken: z.string().min(1, { message: 'Please enter a valid token' }),
+   email: z.optional(z.string().email({ message: 'Please enter a valid email' })),
+   jiraToken: z.optional(z.string().min(1, { message: 'Please enter a valid token' })),
    jiraBaseUrl: z.string().url({ message: 'Please enter a valid url' }),
    jiraDefaultTicket: z.string().regex(/\w-\d/i, { message: 'Please enter a valid ticket' }),
 });
@@ -92,7 +92,7 @@ function SettingsForm() {
       <main>
          <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
-               <FormField
+               {/* <FormField
                   control={form.control}
                   name='email'
                   render={({ field }) => (
@@ -123,7 +123,7 @@ function SettingsForm() {
                         <FormMessage />
                      </FormItem>
                   )}
-               />
+               /> */}
                <FormField
                   control={form.control}
                   name='jiraBaseUrl'

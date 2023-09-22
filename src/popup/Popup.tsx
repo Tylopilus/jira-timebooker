@@ -16,7 +16,9 @@ import {
 } from '@/components/ui/command';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Toaster } from '@/components/ui/toaster';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { toast } from '@/components/ui/use-toast';
 import { Meeting } from '@/content';
 import { clearBookedMeetings, getCalEntries, storeIssueForMeeting } from '@/lib/extension-utils';
 import { addLastUsedIssue, bookTimeOnIssue, clearLastUsedIssues, useJiraSearch } from '@/lib/jira';
@@ -48,10 +50,19 @@ function App() {
          });
 
          storeIssueForMeeting(meeting.title, meeting.ticket);
+         toast({
+            title: 'Success',
+            description: `Booked ${meeting.title} on ${meeting.ticket}`,
+         });
       } catch (e) {
          const { message } = e instanceof Error ? e : { message: 'unknown error' };
          console.log('unable to book meeting', message);
          updateMeeting(meeting, { pending: false, booked: false });
+         toast({
+            title: 'Error',
+            description: `Unable to book ${meeting.title} on ${meeting.ticket}`,
+            variant: 'destructive',
+         });
       }
    }
    async function updateMeeting(meeting: Meeting, update?: Partial<Meeting>) {
@@ -129,6 +140,7 @@ function App() {
                </Button>
             </CardFooter>
          </Card>
+         <Toaster />
       </main>
    );
 }

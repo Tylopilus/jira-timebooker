@@ -1,21 +1,40 @@
 # jira-timebooker
 
-> a chrome extension tools built with Vite + React-ts, and Manifest v3
+> a chrome extension to book time in jira easily
+
+## Features
+
+-  [x] read meetings from outlook calendar web view of current day
+-  [x] parse jira tickets from meeting titles
+-  [x] search for jira ticket numbers
+-  [x] store last used ticket numbers based on meeting series
+-  [x] define default ticket number
+-  [ ] save tickets that have been booked per day already to prevend double booking
+
+## Usage
+
+-  Install the extension following the install guide / install the zip located in the package folder
+-  Right click on the extension icon and go to options page to fill in jira base url and default ticket number
+-  Navigate to [outlook calendar web view](https://outlook.office.com/calendar/view/day) and click on extension icon - Make sure the calnder only shows meetings in day view
+-  Click on the ticket number to search for a ticket summary or for a ticket number
+   -  Clear out search field to show last used ticket numbers
+-  Click on the paperplane to book the time on the selected ticket and with a description of the meeting title
+-  Click book all button to book all tickets in the list
 
 ## Installing
 
-1. Check if your `Node.js` version is >= **14**.
-2. Change or configurate the name of your extension on `src/manifest`.
-3. Run `npm install` to install the dependencies.
+1. Check if your `Node.js` version is >= **18**.
+1. Check if you installed **pnpm**
+1. Run `pnpm install` to install the dependencies.
 
 ## Developing
 
 run the command
 
 ```shell
-$ cd jira-timebooker
+cd jira-timebooker
 
-$ npm run dev
+pnpm run dev
 ```
 
 ### Chrome Extension Developer Mode
@@ -23,18 +42,12 @@ $ npm run dev
 1. set your Chrome browser 'Developer mode' up
 2. click 'Load unpacked', and select `jira-timebooker/build` folder
 
-### Nomal FrontEnd Developer Mode
-
-1. access `http://localhost:3000/`
-2. when debugging popup page, open `/popup.html`
-3. when debugging options page, open `/options.html`
-
 ## Packing
 
 After the development of your extension run the command
 
 ```shell
-$ npm build
+pnpm build
 ```
 
 Now, the content of `build` folder will be the extension ready to be submitted to the Chrome Web Store. Just take a look at the [official guide](https://developer.chrome.com/webstore/publish) to more infos about publishing.

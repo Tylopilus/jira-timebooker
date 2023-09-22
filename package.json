@@ -1,8 +1,8 @@
 {
    "name": "jira-timebooker",
-   "version": "0.0.0",
-   "author": "**",
-   "description": "",
+   "version": "1.0.0",
+   "author": "Helge Ahrens",
+   "description": "Jira extension to book time",
    "type": "module",
    "license": "MIT",
    "keywords": [
