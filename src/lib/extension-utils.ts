@@ -56,7 +56,7 @@ export async function getIssueForMeeting(meeting: string) {
 }
 
 export async function storeIssueForMeeting(meeting: string, issue: string) {
-   const bookedMeetings = await chrome.storage.sync.get('bookedMeetings');
+   const { bookedMeetings } = await chrome.storage.sync.get('bookedMeetings');
    bookedMeetings[meeting] = issue;
    const res = await chrome.storage.sync.set({ bookedMeetings });
 }

@@ -105,7 +105,7 @@ function App() {
                </div>
             </CardHeader>
             <CardContent className='p-4 pr-2'>
-               <div className='space-y-6 max-h-[380px] overflow-y-auto'>
+               <div className='space-y-6 max-h-[380px] min-h-[300px] overflow-y-auto'>
                   {items?.map((item) => (
                      <IssueEntry
                         meeting={item}
@@ -117,15 +117,15 @@ function App() {
                </div>
             </CardContent>
             <CardFooter className='justify-end pt-4'>
-               {/* <Button
+               <Button
                   variant={'secondary'}
                   onClick={() => {
-                     clearLastUsedIssues();
+                     // clearLastUsedIssues();
                      clearBookedMeetings();
                   }}
                >
                   Reset all
-               </Button> */}
+               </Button>
                <Button
                   onClick={async () => {
                      setUpdating(true);
@@ -197,7 +197,7 @@ function IssueEntry({
                         />
                         {isFetching && <Loader2 className='h-4 w-4 animate-spin' />}
                      </div>
-                     <CommandList>
+                     <CommandList className='max-h-[180px]'>
                         <CommandEmpty>No results found.</CommandEmpty>
                         <CommandGroup>
                            {data &&
