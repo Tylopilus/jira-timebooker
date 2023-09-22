@@ -38,8 +38,8 @@ function App() {
 
 export default App;
 const settingsFormSchema = z.object({
-   email: z.optional(z.string().email({ message: 'Please enter a valid email' })),
-   jiraToken: z.optional(z.string().min(1, { message: 'Please enter a valid token' })),
+   email: z.string().email({ message: 'Please enter a valid email' }).optional(),
+   jiraToken: z.string().min(1, { message: 'Please enter a valid token' }).optional(),
    jiraBaseUrl: z.string().url({ message: 'Please enter a valid url' }),
    jiraDefaultTicket: z.string().regex(/\w-\d/i, { message: 'Please enter a valid ticket' }),
 });
@@ -53,8 +53,8 @@ const defaultValues = async (): Promise<SettingsFormValues> => {
       'jiraDefaultTicket',
    ]);
    return {
-      email: settings?.email || '',
-      jiraToken: settings?.jiraToken || '',
+      email: settings?.email || undefined,
+      jiraToken: settings?.jiraToken || undefined,
       jiraBaseUrl: settings?.jiraBaseUrl || '',
       jiraDefaultTicket: settings?.jiraDefaultTicket || '',
    };
