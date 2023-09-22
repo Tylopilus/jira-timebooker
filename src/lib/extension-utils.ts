@@ -48,10 +48,10 @@ export async function getIssueForMeeting(meeting: string) {
       if (bookedMeetings && Object.keys(bookedMeetings).includes(meeting)) {
          return bookedMeetings[meeting];
       }
-      return 'CWAL-1';
+      return chrome.storage.sync.get('jiraDefaultTicket').then((data) => data.jiraDefaultTicket);
    } catch (e) {
       console.error(e);
-      return 'CWAL-1';
+      return chrome.storage.sync.get('jiraDefaultTicket').then((data) => data.jiraDefaultTicket);
    }
 }
 
