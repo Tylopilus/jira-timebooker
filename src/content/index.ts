@@ -51,6 +51,7 @@ async function getMeetings(): Promise<Meeting[]> {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
    if (message === 'getCalEntries') {
       getMeetings().then((meetings) => {
+         console.log('sending..', meetings);
          sendResponse(meetings);
       });
    }

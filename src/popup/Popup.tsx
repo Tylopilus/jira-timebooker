@@ -20,10 +20,15 @@ import { Toaster } from '@/components/ui/toaster';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from '@/components/ui/use-toast';
 import { Meeting } from '@/content';
-import { clearBookedMeetings, getCalEntries, storeIssueForMeeting } from '@/lib/extension-utils';
+import {
+   clearBookedMeetings,
+   getCalEntries,
+   openOptionsPage,
+   storeIssueForMeeting,
+} from '@/lib/extension-utils';
 import { addLastUsedIssue, bookTimeOnIssue, clearLastUsedIssues, useJiraSearch } from '@/lib/jira';
 import { useDebounce } from '@/lib/utils';
-import { Loader2, RefreshCcw, Search, Send } from 'lucide-react';
+import { Loader2, RefreshCcw, Search, Send, Settings } from 'lucide-react';
 import { ReactElement, useEffect, useState, useTransition } from 'react';
 
 function App() {
@@ -91,15 +96,15 @@ function App() {
                      <TooltipTrigger asChild>
                         <Button
                            onClick={() => {
-                              getCalEntries(setItems);
+                              openOptionsPage();
                            }}
                            variant={'ghost'}
                         >
-                           <RefreshCcw className='h-4 w-4 mr-4' /> refresh
+                           <Settings className='h-4 w-4 mr-2' /> Options
                         </Button>
                      </TooltipTrigger>
                      <TooltipContent>
-                        <p>Refresh calendar entries</p>
+                        <p>Open options page</p>
                      </TooltipContent>
                   </Tooltip>
                </div>
@@ -117,7 +122,7 @@ function App() {
                </div>
             </CardContent>
             <CardFooter className='justify-end pt-4'>
-               <Button
+               {/* <Button
                   variant={'secondary'}
                   onClick={() => {
                      // clearLastUsedIssues();
@@ -125,7 +130,7 @@ function App() {
                   }}
                >
                   Reset all
-               </Button>
+               </Button> */}
                <Button
                   onClick={async () => {
                      setUpdating(true);

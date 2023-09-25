@@ -23,7 +23,7 @@ export default defineManifest({
    content_scripts: [
       {
          matches: [
-            'https://outlook.office.com/calendar/view/day',
+            'https://outlook.office.com/calendar/view/day*',
             'https://*.atlassian.net/rest/api/*',
          ],
          js: ['src/content/index.ts'],
