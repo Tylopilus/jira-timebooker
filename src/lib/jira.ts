@@ -43,10 +43,23 @@ export async function searchJira(_props: SearchProps): Promise<Array<JiraIssue>>
    if (!props.query) {
       return getLastUsedIssues();
    }
-   const searchParam = props.query.match(/\w+-\d+/i)
-      ? `issue = ${props.query}`
-      : `summary ~ ${props.query}`;
-   const url = `${props.jiraBaseUrl}/rest/api/3/search?jql=${searchParam}`;
+   // const props = { query: 'abc' };
+   let url = `${props.jiraBaseUrl}/rest/api/3/search?jql=`;
+   const matchProjectRegex = new RegExp(/(^#\w+\W)(.*)/i);
+
+   if (matchProjectRegex.test(props.query)) {
+      const projectMatch = props.query.match(matchProjectRegex);
+      const project = (projectMatch && projectMatch[1].replace('#', '')) || '';
+      const summary = (projectMatch && projectMatch[2]) || '';
+      const searchParam = `project = ${project}`;
+      url = url.concat(`${searchParam} and summary ~ ${summary}`);
+   } else if (/\w+-\d+/i.test(props.query)) {
+      url = url.concat(`issue = ${props.query}`);
+   } else {
+      const searchParam = `summary ~ "${props.query}"`;
+      url = url.concat(searchParam);
+   }
+   console.log({ url });
    return fetch(url, {
       headers: {
          'Content-Type': 'application/json',

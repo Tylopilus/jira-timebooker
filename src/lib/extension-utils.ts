@@ -1,8 +1,35 @@
 import { SettingsFormValues } from '@/options/Options';
 import { Meeting } from '../content';
 
-export function getCalEntries(cb: (response: Meeting[]) => void) {
-   chrome.runtime.sendMessage('getCalEntries', cb);
+function getAggregatedMeetings(meetings: Meeting[], todaysMeetings: Array<string>): Meeting[] {
+   const aggregatedMeetings = meetings.map((meeting) => {
+      const booked = todaysMeetings.includes(meeting.id);
+      return {
+         ...meeting,
+         booked,
+      };
+   });
+
+   return aggregatedMeetings;
+}
+
+export async function addMeetingBookedByDay(today: string, meeting: Meeting) {
+   const { meetingsBookedByDay = {} } = await chrome.storage.sync.get('meetingsBookedByDay');
+   if (meetingsBookedByDay[today]) {
+      meetingsBookedByDay[today].push(meeting.id);
+   } else {
+      meetingsBookedByDay[today] = [meeting.id];
+   }
+   chrome.storage.sync.set({ meetingsBookedByDay });
+}
+
+export async function getMeetingsFromCal(): Promise<Meeting[]> {
+   const meetings = await chrome.runtime.sendMessage('getCalEntries');
+   const { meetingsBookedByDay = {} } = await chrome.storage.sync.get('meetingsBookedByDay');
+   const todaysBookedMeetings = meetingsBookedByDay[new Date().toLocaleDateString()] || [];
+
+   const aggregatedMeetings = getAggregatedMeetings(meetings, todaysBookedMeetings);
+   return aggregatedMeetings;
 }
 
 export function openOptionsPage() {
@@ -30,6 +57,7 @@ async function testConnection(data: SettingsFormValues) {
       throw new Error('Could not connect to Jira');
    }
 }
+
 export async function storeData(data: SettingsFormValues) {
    try {
       await testConnection(data);
@@ -63,4 +91,12 @@ export async function storeIssueForMeeting(meeting: string, issue: string) {
 
 export async function clearBookedMeetings() {
    await chrome.storage.sync.set({ bookedMeetings: {} });
+}
+
+export async function createHash(message: string): Promise<string> {
+   const msgUint8 = new TextEncoder().encode(message); // encode as (utf-8) Uint8Array
+   const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8); // hash the message
+   const hashArray = Array.from(new Uint8Array(hashBuffer)); // convert buffer to byte array
+   const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join(''); // convert bytes to hex string
+   return hashHex;
 }

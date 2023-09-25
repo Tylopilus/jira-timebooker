@@ -9,7 +9,8 @@
 -  [x] search for jira ticket numbers
 -  [x] store last used ticket numbers based on meeting series
 -  [x] define default ticket number
--  [ ] save tickets that have been booked per day already to prevend double booking
+-  [x] save tickets that have been booked per day already to prevend double booking
+-  [x] search for projects by prepending #projectkey to search field
 
 ## Usage
 

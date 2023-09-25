@@ -21,14 +21,14 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { toast } from '@/components/ui/use-toast';
 import { Meeting } from '@/content';
 import {
-   clearBookedMeetings,
-   getCalEntries,
+   addMeetingBookedByDay,
+   getMeetingsFromCal,
    openOptionsPage,
    storeIssueForMeeting,
 } from '@/lib/extension-utils';
-import { addLastUsedIssue, bookTimeOnIssue, clearLastUsedIssues, useJiraSearch } from '@/lib/jira';
+import { addLastUsedIssue, bookTimeOnIssue, useJiraSearch } from '@/lib/jira';
 import { useDebounce } from '@/lib/utils';
-import { Loader2, RefreshCcw, Search, Send, Settings } from 'lucide-react';
+import { Loader2, Search, Send, Settings } from 'lucide-react';
 import { ReactElement, useEffect, useState, useTransition } from 'react';
 
 function App() {
@@ -37,7 +37,13 @@ function App() {
    const [, startTransition] = useTransition();
 
    useEffect(() => {
-      getCalEntries(setItems);
+      // getMeetingsFromCal(setItems);
+
+      const getMeetings = async () => {
+         const meetings = await getMeetingsFromCal();
+         setItems(meetings);
+      };
+      getMeetings();
    }, []);
 
    async function bookMeeting(meeting: Meeting): Promise<void> {
@@ -50,6 +56,7 @@ function App() {
             title: meeting.title,
          });
          updateMeeting(meeting, { pending: false, booked: true });
+         addMeetingBookedByDay(new Date().toLocaleDateString(), meeting);
          addLastUsedIssue({
             key: meeting.ticket,
          });

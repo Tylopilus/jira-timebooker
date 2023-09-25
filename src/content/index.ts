@@ -1,4 +1,4 @@
-import { getIssueForMeeting } from '@/lib/extension-utils';
+import { createHash, getIssueForMeeting } from '@/lib/extension-utils';
 
 console.info('chrome-ext template-react-ts content script');
 
@@ -29,7 +29,7 @@ async function getMeetings(): Promise<Meeting[]> {
          const startTime = new Date([date, start].join(' ')).toISOString();
          const endTime = new Date([date, end].join(' ')).toISOString();
          const title = el.getAttribute('title')?.split('\n')[0].trim() ?? 'No title';
-         const id = crypto.randomUUID();
+         const id = await createHash([title, startTime, endTime].join(''));
          const ticketMatch = title.match(/\w+-\d+\s/i);
          const issueForMeeting = await getIssueForMeeting(title);
          const ticket = ticketMatch ? ticketMatch[0].trim() : issueForMeeting;
