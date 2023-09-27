@@ -13,6 +13,11 @@ function getAggregatedMeetings(meetings: Meeting[], todaysMeetings: Array<string
    return aggregatedMeetings;
 }
 
+export async function getSelectedDay(): Promise<string> {
+   const selectedDay = await chrome.runtime.sendMessage('getSelectedDay');
+   return new Date(selectedDay).toLocaleDateString();
+}
+
 export async function addMeetingBookedByDay(today: string, meeting: Meeting) {
    const { meetingsBookedByDay = {} } = await chrome.storage.sync.get('meetingsBookedByDay');
    if (meetingsBookedByDay[today]) {
@@ -26,7 +31,7 @@ export async function addMeetingBookedByDay(today: string, meeting: Meeting) {
 export async function getMeetingsFromCal(): Promise<Meeting[]> {
    const meetings = await chrome.runtime.sendMessage('getCalEntries');
    const { meetingsBookedByDay = {} } = await chrome.storage.sync.get('meetingsBookedByDay');
-   const todaysBookedMeetings = meetingsBookedByDay[new Date().toLocaleDateString()] || [];
+   const todaysBookedMeetings = meetingsBookedByDay[await getSelectedDay()] || [];
 
    const aggregatedMeetings = getAggregatedMeetings(meetings, todaysBookedMeetings);
    return aggregatedMeetings;
@@ -70,7 +75,7 @@ export async function storeData(data: SettingsFormValues) {
    }
 }
 
-export async function getIssueForMeeting(meeting: string) {
+export async function getIssueKeyForMeetingName(meeting: string) {
    try {
       const { bookedMeetings } = await chrome.storage.sync.get(['bookedMeetings']);
       if (bookedMeetings && Object.keys(bookedMeetings).includes(meeting)) {
@@ -83,7 +88,7 @@ export async function getIssueForMeeting(meeting: string) {
    }
 }
 
-export async function storeIssueForMeeting(meeting: string, issue: string) {
+export async function saveIssueKeyForMeetingName(meeting: string, issue: string) {
    const { bookedMeetings } = await chrome.storage.sync.get('bookedMeetings');
    bookedMeetings[meeting] = issue;
    const res = await chrome.storage.sync.set({ bookedMeetings });

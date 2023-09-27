@@ -1,4 +1,4 @@
-import { createHash, getIssueForMeeting } from '@/lib/extension-utils';
+import { createHash, getIssueKeyForMeetingName } from '@/lib/extension-utils';
 
 console.info('chrome-ext template-react-ts content script');
 
@@ -22,16 +22,15 @@ async function getMeetings(): Promise<Meeting[]> {
    const meetings: Meeting[] = await Promise.all(
       meetingElements.map(async (el): Promise<Meeting> => {
          const matchedLabel = el.ariaLabel?.match(/(\d{2}\:\d{2}).*(\d{2}\:\d{2})/i);
-         const date =
-            document.querySelector('.YjxmP.zVmbM')?.textContent || new Date().toDateString();
          const start = matchedLabel ? matchedLabel[1] : '00:00';
          const end = matchedLabel ? matchedLabel[2] : '00:00';
+         const date = getSelectedDay();
          const startTime = new Date([date, start].join(' ')).toISOString();
          const endTime = new Date([date, end].join(' ')).toISOString();
          const title = el.getAttribute('title')?.split('\n')[0].trim() ?? 'No title';
          const id = await createHash([title, startTime, endTime].join(''));
          const ticketMatch = title.match(/\w+-\d+\s/i);
-         const issueForMeeting = await getIssueForMeeting(title);
+         const issueForMeeting = await getIssueKeyForMeetingName(title);
          const ticket = ticketMatch ? ticketMatch[0].trim() : issueForMeeting;
          return {
             id,
@@ -48,12 +47,22 @@ async function getMeetings(): Promise<Meeting[]> {
    );
    return meetings;
 }
+
+function getSelectedDay(): string {
+   const date = document.querySelector('.YjxmP.zVmbM')?.textContent || new Date().toDateString();
+   return date;
+}
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
    if (message === 'getCalEntries') {
       getMeetings().then((meetings) => {
          console.log('sending..', meetings);
          sendResponse(meetings);
       });
+   }
+   if (message === 'getSelectedDay') {
+      const selectedDay = getSelectedDay();
+      sendResponse(selectedDay);
    }
    return true;
 });

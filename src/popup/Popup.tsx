@@ -23,8 +23,9 @@ import { Meeting } from '@/content';
 import {
    addMeetingBookedByDay,
    getMeetingsFromCal,
+   getSelectedDay,
    openOptionsPage,
-   storeIssueForMeeting,
+   saveIssueKeyForMeetingName,
 } from '@/lib/extension-utils';
 import { addLastUsedIssue, bookTimeOnIssue, useJiraSearch } from '@/lib/jira';
 import { useDebounce } from '@/lib/utils';
@@ -56,12 +57,13 @@ function App() {
             title: meeting.title,
          });
          updateMeeting(meeting, { pending: false, booked: true });
-         addMeetingBookedByDay(new Date().toLocaleDateString(), meeting);
+         const selectedDay = await getSelectedDay();
+         addMeetingBookedByDay(selectedDay, meeting);
          addLastUsedIssue({
             key: meeting.ticket,
          });
 
-         storeIssueForMeeting(meeting.title, meeting.ticket);
+         saveIssueKeyForMeetingName(meeting.title, meeting.ticket);
          toast({
             title: 'Success',
             description: `Booked ${meeting.title} on ${meeting.ticket}`,

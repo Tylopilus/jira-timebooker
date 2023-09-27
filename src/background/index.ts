@@ -11,5 +11,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
          });
       });
    }
+
+   if (message === 'getSelectedDay') {
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+         chrome.tabs.sendMessage(tabs[0].id!, 'getSelectedDay', async (response) => {
+            sendResponse(response);
+            return true;
+         });
+      });
+   }
    return true;
 });
