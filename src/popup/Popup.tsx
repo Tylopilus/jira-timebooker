@@ -30,7 +30,7 @@ import {
 import { addLastUsedIssue, bookTimeOnIssue, useJiraSearch } from '@/lib/jira';
 import { useDebounce } from '@/lib/utils';
 import { Loader2, Search, Send, Settings } from 'lucide-react';
-import { ReactElement, useEffect, useState, useTransition } from 'react';
+import { ReactElement, useEffect, useRef, useState, useTransition } from 'react';
 
 function App() {
    const [items, setItems] = useState<Meeting[]>();
@@ -177,11 +177,43 @@ function IssueEntry({
    const [search, setSearch] = useState<string>(meeting.ticket);
    const debouncedValue = useDebounce<string>(search, 500);
    const { isFetching, data } = useJiraSearch(debouncedValue);
+   const [edit, setEdit] = useState(false);
 
    return (
       <div className='flex justify-between'>
-         <div>
-            <p className='text-sm font-medium leading-none'>{meeting.title}</p>
+         <div className='w-full'>
+            {edit ? (
+               <div className='pr-4'>
+                  <Input
+                     defaultValue={meeting.title}
+                     ref={(inputElement) => {
+                        if (!inputElement) return;
+
+                        inputElement.select();
+                     }}
+                     onBlur={(event) => {
+                        updateMeeting(meeting, { title: event.target.value });
+                        setEdit(false);
+                     }}
+                     onKeyDown={(event) => {
+                        if (event.key === 'Escape') {
+                           event.preventDefault();
+                           setEdit(false);
+                        }
+                     }}
+                     className='p-0 font-medium shadow-none border-0 focus-visible:ring-0 focus-visible:border-b focus-visible:border-primary'
+                  />
+               </div>
+            ) : (
+               <Button
+                  variant={'link'}
+                  size={'default'}
+                  className='px-0 justify-start text-left'
+                  onClick={() => setEdit(true)}
+               >
+                  {meeting.title}
+               </Button>
+            )}
             <p className='text-sm text-muted-foreground'>
                {meeting.start}h - {meeting.end}h
             </p>

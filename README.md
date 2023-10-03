@@ -11,6 +11,7 @@
 -  [x] define default ticket number
 -  [x] save tickets that have been booked per day already to prevend double booking
 -  [x] search for projects by prepending #projectkey to search field
+-  [x] change meeting title prior to booking
 
 ## Usage
 
@@ -24,9 +25,21 @@
 
 ## Installing
 
-1. Check if your `Node.js` version is >= **18**.
-1. Check if you installed **pnpm**
-1. Run `pnpm install` to install the dependencies.
+1. set your Chrome browser 'Developer mode' up
+
+-  Option 1: Use the prepacked build
+
+   1. Download the [packaged zip](https://github.com/Tylopilus/jira-timebooker/blob/main/package/jira-timebooker-extension-v1.0.0.zip) file from package folder and unzip it
+   1. Naviagte to `chrome://extensions/`
+   1. click 'Load unpacked', and select the folder containing the unzipped files
+
+-  Option 2: Build from source
+   1. Check if your `Node.js` version is >= **18**.
+   1. Check if you installed **pnpm**
+   1. Run `pnpm install` to install the dependencies.
+   1. Run `pnpm build` to build the extension.
+   1. Naviagte to `chrome://extensions/`
+   1. click 'Load unpacked', and select `jira-timebooker/build` folder
 
 ## Developing
 
@@ -35,7 +48,7 @@ run the command
 ```shell
 cd jira-timebooker
 
-pnpm run dev
+pnpm dev
 ```
 
 ### Chrome Extension Developer Mode
