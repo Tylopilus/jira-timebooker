@@ -1,13 +1,25 @@
 import { SettingsFormValues } from '@/options/Options';
 import { Meeting } from '../content';
 
-function getAggregatedMeetings(meetings: Meeting[], todaysMeetings: Array<string>): Meeting[] {
+function getAggregatedMeetings(
+   meetings: Meeting[],
+   todaysMeetings: Array<string>,
+   bookedMeetingTitles: Record<string, string>,
+): Meeting[] {
    const aggregatedMeetings = meetings.map((meeting) => {
       const booked = todaysMeetings.includes(meeting.id);
-      return {
+      const aggregatedMeeting = {
          ...meeting,
          booked,
       };
+      if (booked) {
+         for (const [key, value] of Object.entries(bookedMeetingTitles)) {
+            if (key === meeting.title) {
+               aggregatedMeeting.ticket = value;
+            }
+         }
+      }
+      return aggregatedMeeting;
    });
 
    return aggregatedMeetings;
@@ -32,8 +44,13 @@ export async function getMeetingsFromCal(): Promise<Meeting[]> {
    const meetings = await chrome.runtime.sendMessage('getCalEntries');
    const { meetingsBookedByDay = {} } = await chrome.storage.sync.get('meetingsBookedByDay');
    const todaysBookedMeetings = meetingsBookedByDay[await getSelectedDay()] || [];
+   const { bookedMeetings: bookedMeetingTitles } = await chrome.storage.sync.get('bookedMeetings');
 
-   const aggregatedMeetings = getAggregatedMeetings(meetings, todaysBookedMeetings);
+   const aggregatedMeetings = getAggregatedMeetings(
+      meetings,
+      todaysBookedMeetings,
+      bookedMeetingTitles,
+   );
    return aggregatedMeetings;
 }
 
@@ -75,11 +92,11 @@ export async function storeData(data: SettingsFormValues) {
    }
 }
 
-export async function getIssueKeyForMeetingName(meeting: string) {
+export async function getIssueKeyForMeetingName(meetingTitle: string) {
    try {
       const { bookedMeetings } = await chrome.storage.sync.get(['bookedMeetings']);
-      if (bookedMeetings && Object.keys(bookedMeetings).includes(meeting)) {
-         return bookedMeetings[meeting];
+      if (bookedMeetings && Object.keys(bookedMeetings).includes(meetingTitle)) {
+         return bookedMeetings[meetingTitle];
       }
       return chrome.storage.sync.get('jiraDefaultTicket').then((data) => data.jiraDefaultTicket);
    } catch (e) {
