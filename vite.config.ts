@@ -1,3 +1,5 @@
+/// <reference types="vitest" />
+/// <reference types="vite/client" />
 import { defineConfig } from 'vite';
 import { crx } from '@crxjs/vite-plugin';
 import react from '@vitejs/plugin-react';
@@ -20,6 +22,11 @@ export default defineConfig(({ mode }) => {
                chunkFileNames: 'assets/chunk-[hash].js',
             },
          },
+      },
+      test: {
+         globals: true,
+         environment: 'jsdom',
+         setupFiles: './src/test/setup.ts',
       },
 
       plugins: [
