@@ -1,5 +1,6 @@
 import { SettingsFormValues } from '@/options/Options';
 import { Meeting } from '../content';
+import { JiraIssue, searchJiraIssue } from './jira';
 
 function getAggregatedMeetings(
    meetings: Meeting[],
@@ -81,15 +82,11 @@ async function testConnection(data: SettingsFormValues) {
 }
 
 export async function storeData(data: SettingsFormValues) {
-   try {
-      await testConnection(data);
-      if (import.meta.env.MODE === 'testing') {
-         return;
-      }
-      await chrome.storage.sync.set(data);
-   } catch (e) {
-      throw e;
+   await testConnection(data);
+   if (import.meta.env.MODE === 'testing') {
+      return;
    }
+   await chrome.storage.sync.set(data);
 }
 
 export async function getIssueKeyForMeetingName(meetingTitle: string) {
@@ -108,7 +105,7 @@ export async function getIssueKeyForMeetingName(meetingTitle: string) {
 export async function saveIssueKeyForMeetingName(meeting: string, issue: string) {
    const { bookedMeetings } = await chrome.storage.sync.get('bookedMeetings');
    bookedMeetings[meeting] = issue;
-   const res = await chrome.storage.sync.set({ bookedMeetings });
+   await chrome.storage.sync.set({ bookedMeetings });
 }
 
 export async function clearBookedMeetings() {
@@ -121,4 +118,19 @@ export async function createHash(message: string): Promise<string> {
    const hashArray = Array.from(new Uint8Array(hashBuffer)); // convert buffer to byte array
    const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join(''); // convert bytes to hex string
    return hashHex;
+}
+
+export async function getLastUsedIssues(): Promise<Array<JiraIssue>> {
+   return chrome.storage.local.get(['lastUsedIssues']).then((res) => res.lastUsedIssues || []);
+}
+
+export async function clearLastUsedIssues() {
+   chrome.storage.local.set({ lastUsedIssues: [] });
+}
+
+export async function addLastUsedIssue(issue: Pick<JiraIssue, 'key'>) {
+   const lastUsedIssues = await getLastUsedIssues();
+   const jiraIssue = await searchJiraIssue({ query: issue.key });
+   const newIssues = [jiraIssue[0], ...lastUsedIssues.filter((i) => i.key !== jiraIssue[0].key)];
+   return chrome.storage.local.set({ lastUsedIssues: newIssues });
 }

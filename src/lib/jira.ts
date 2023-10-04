@@ -1,5 +1,6 @@
 import { SettingsFormValues } from '@/options/Options';
 import { useQuery } from '@tanstack/react-query';
+import { getLastUsedIssues } from './extension-utils';
 
 async function getJiraOptions(): Promise<SettingsFormValues> {
    const { email, jiraBaseUrl, jiraToken, jiraDefaultTicket } = await chrome.storage.sync.get([
@@ -11,28 +12,13 @@ async function getJiraOptions(): Promise<SettingsFormValues> {
    return { email, jiraBaseUrl, jiraToken, jiraDefaultTicket };
 }
 
-type JiraIssue = {
+export type JiraIssue = {
    id: string;
    key: string;
    fields: {
       summary: string;
    };
 };
-
-export async function getLastUsedIssues(): Promise<Array<JiraIssue>> {
-   return chrome.storage.local.get(['lastUsedIssues']).then((res) => res.lastUsedIssues || []);
-}
-
-export async function clearLastUsedIssues() {
-   chrome.storage.local.set({ lastUsedIssues: [] });
-}
-
-export async function addLastUsedIssue(issue: Pick<JiraIssue, 'key'>) {
-   const lastUsedIssues = await getLastUsedIssues();
-   const jiraIssue = await searchJiraIssue({ query: issue.key });
-   const newIssues = [jiraIssue[0], ...lastUsedIssues.filter((i) => i.key !== jiraIssue[0].key)];
-   return chrome.storage.local.set({ lastUsedIssues: newIssues });
-}
 
 type SearchProps = {
    query: string;

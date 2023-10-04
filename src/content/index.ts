@@ -21,7 +21,7 @@ async function getMeetings(): Promise<Meeting[]> {
 
    const meetings: Meeting[] = await Promise.all(
       meetingElements.map(async (el): Promise<Meeting> => {
-         const matchedLabel = el.ariaLabel?.match(/(\d{2}\:\d{2}).*(\d{2}\:\d{2})/i);
+         const matchedLabel = el.ariaLabel?.match(/(\d{2}:\d{2}).*(\d{2}:\d{2})/i);
          const start = matchedLabel ? matchedLabel[1] : '00:00';
          const end = matchedLabel ? matchedLabel[2] : '00:00';
          const date = getSelectedDay();

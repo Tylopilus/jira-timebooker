@@ -3,6 +3,7 @@
 import { defineConfig } from 'vite';
 import { crx } from '@crxjs/vite-plugin';
 import react from '@vitejs/plugin-react';
+import eslint from 'vite-plugin-eslint';
 import zipPack from 'vite-plugin-zip-pack';
 import path from 'path';
 import manifest from './src/manifest';
@@ -32,6 +33,7 @@ export default defineConfig(({ mode }) => {
       plugins: [
          crx({ manifest }),
          react(),
+         eslint(),
          zipPack({
             outDir: `package`,
             inDir: 'build',

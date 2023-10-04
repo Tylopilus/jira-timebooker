@@ -21,16 +21,17 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { toast } from '@/components/ui/use-toast';
 import { Meeting } from '@/content';
 import {
+   addLastUsedIssue,
    addMeetingBookedByDay,
    getMeetingsFromCal,
    getSelectedDay,
    openOptionsPage,
    saveIssueKeyForMeetingName,
 } from '@/lib/extension-utils';
-import { addLastUsedIssue, bookTimeOnIssue, useJiraSearch } from '@/lib/jira';
+import { bookTimeOnIssue, useJiraSearch } from '@/lib/jira';
 import { useDebounce } from '@/lib/utils';
 import { Loader2, Search, Send, Settings } from 'lucide-react';
-import { ReactElement, useEffect, useRef, useState, useTransition } from 'react';
+import { ReactElement, useEffect, useState, useTransition } from 'react';
 
 function App() {
    const [items, setItems] = useState<Meeting[]>();
