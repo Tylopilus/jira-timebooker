@@ -2,7 +2,7 @@ import { SettingsFormValues } from '@/options/Options';
 import { Meeting } from '../content';
 import { JiraIssue, searchJiraIssue } from './jira';
 
-function getAggregatedMeetings(
+export function getAggregatedMeetings(
    meetings: Meeting[],
    todaysMeetings: Array<string>,
    bookedMeetingTitles: Record<string, string>,
@@ -81,7 +81,7 @@ async function testConnection(data: SettingsFormValues) {
    }
 }
 
-export async function storeData(data: SettingsFormValues) {
+export async function storeJiraSettings(data: SettingsFormValues) {
    await testConnection(data);
    if (import.meta.env.MODE === 'testing') {
       return;
@@ -91,8 +91,8 @@ export async function storeData(data: SettingsFormValues) {
 
 export async function getIssueKeyForMeetingName(meetingTitle: string) {
    try {
-      const { bookedMeetings } = await chrome.storage.sync.get(['bookedMeetings']);
-      if (bookedMeetings && Object.keys(bookedMeetings).includes(meetingTitle)) {
+      const { bookedMeetings = {} } = await chrome.storage.sync.get(['bookedMeetings']);
+      if (Object.keys(bookedMeetings).includes(meetingTitle)) {
          return bookedMeetings[meetingTitle];
       }
       return chrome.storage.sync.get('jiraDefaultTicket').then((data) => data.jiraDefaultTicket);

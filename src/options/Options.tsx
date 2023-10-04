@@ -16,7 +16,7 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Toaster } from '@/components/ui/toaster';
 import { toast } from '@/components/ui/use-toast';
-import { storeData } from '@/lib/extension-utils';
+import { storeJiraSettings } from '@/lib/extension-utils';
 import { Loader2 } from 'lucide-react';
 
 function App() {
@@ -69,7 +69,7 @@ function SettingsForm() {
    async function onSubmit(data: SettingsFormValues) {
       setSubmitting(true);
       try {
-         await storeData(data);
+         await storeJiraSettings(data);
          toast({
             title: 'Success 🎉',
             description: 'Settings have been saved.',
