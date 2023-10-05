@@ -106,7 +106,7 @@ export async function bookTimeOnIssue(props: BookTimeOnIssueProps) {
 
 export async function searchJiraIssue(props: SearchProps): Promise<Array<JiraIssue>> {
    const issues = await searchJira(props);
-   const res = issues.map((issue: any) => ({
+   const res = issues.map((issue) => ({
       id: issue.id,
       key: issue.key,
       fields: { summary: issue.fields.summary },

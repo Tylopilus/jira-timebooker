@@ -28,6 +28,11 @@ export default defineConfig(({ mode }) => {
          globals: true,
          environment: 'jsdom',
          setupFiles: './src/test/setup.ts',
+         //    browser: {
+         //       headless: false,
+         //       name: 'chrome',
+         //       enabled: true,
+         // },
       },
 
       plugins: [
@@ -37,9 +42,9 @@ export default defineConfig(({ mode }) => {
          zipPack({
             outDir: `package`,
             inDir: 'build',
-            // @ts-ignore
+            // @ts-expect-error needed here
             outFileName: `${manifest.short_name ?? manifest.name.replaceAll(' ', '-')}-extension-v${
-               // @ts-ignore
+               // @ts-expect-error needed here
                manifest.version
             }.zip`,
          }),

@@ -1,5 +1,3 @@
-import { Meeting } from '@/content';
-
 const meetings = [
    {
       id: '1',
