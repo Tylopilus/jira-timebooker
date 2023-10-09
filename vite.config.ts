@@ -7,11 +7,10 @@ import eslint from 'vite-plugin-eslint';
 import zipPack from 'vite-plugin-zip-pack';
 import path from 'path';
 import manifest from './src/manifest';
-//@ts-ignore
 import { config } from './src/read_pages_folder';
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => {
+export default defineConfig(() => {
    return {
       build: {
          emptyOutDir: true,

@@ -1,4 +1,6 @@
 import { createHash, getIssueKeyForMeetingName } from '@/lib/extension-utils';
+import parse from 'date-fns/parse';
+import * as dateLocales from 'date-fns/locale';
 
 console.info('chrome-ext template-react-ts content script');
 
@@ -15,6 +17,20 @@ export type Meeting = {
    pending: boolean;
 };
 
+async function generateIsoString(date: string, time: string): Promise<string> {
+   const docLang = document.documentElement.lang.split('-')[0] as keyof typeof dateLocales;
+   const dateRef = document
+      .querySelector('#leftPaneContainer')!
+      .querySelector('[aria-selected=true] button')!
+      .getAttribute('aria-label')!;
+   const parsedDateString = parse([dateRef, time].join(' '), 'dd, MMMM, yyyy HH:mm', new Date(), {
+      locale: dateLocales[docLang],
+   }).toISOString();
+   // const isoDate = new Date([date, time].join(' ')).toISOString();
+   // console.log(parsedDateString === isoDate);
+   return parsedDateString;
+}
+
 async function getMeetings(): Promise<Meeting[]> {
    const meetingElements = [...document.querySelectorAll('div[role=button][class^=root]')];
    if (!meetingElements.length) throw new Error('No meetings found');
@@ -25,8 +41,8 @@ async function getMeetings(): Promise<Meeting[]> {
          const start = matchedLabel ? matchedLabel[1] : '00:00';
          const end = matchedLabel ? matchedLabel[2] : '00:00';
          const date = getSelectedDay();
-         const startTime = new Date([date, start].join(' ')).toISOString();
-         const endTime = new Date([date, end].join(' ')).toISOString();
+         const startTime = await generateIsoString(date, start);
+         const endTime = await generateIsoString(date, end);
          const title = el.getAttribute('title')?.split('\n')[0].trim() ?? 'No title';
          const id = await createHash([title, startTime, endTime].join(''));
          const ticketMatch = title.match(/\w+-\d+\s/i);
