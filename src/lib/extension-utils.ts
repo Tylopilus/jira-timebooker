@@ -1,6 +1,6 @@
 import { SettingsFormValues } from '@/options/Options';
-import parse from 'date-fns/parse';
 import * as dateLocales from 'date-fns/locale';
+import parse from 'date-fns/parse';
 import { Meeting } from '../content';
 import { JiraIssue, searchJiraIssue } from './jira';
 
@@ -34,21 +34,24 @@ export async function getSelectedDay(): Promise<string> {
 }
 
 export async function addMeetingBookedByDay(today: string, meeting: Meeting) {
-   const { meetingsBookedByDay = {} } = await chrome.storage.sync.get('meetingsBookedByDay');
+   const { meetingsBookedByDay = {} } = await chrome.storage.local.get('meetingsBookedByDay');
    if (meetingsBookedByDay[today]) {
       meetingsBookedByDay[today].push(meeting.id);
    } else {
       meetingsBookedByDay[today] = [meeting.id];
    }
-   chrome.storage.sync.set({ meetingsBookedByDay });
+   chrome.storage.local.set({ meetingsBookedByDay });
 }
 
 export async function getMeetingsFromCal(): Promise<Meeting[]> {
    const meetings = await chrome.runtime.sendMessage('getCalEntries');
-   const { meetingsBookedByDay = {} } = await chrome.storage.sync.get('meetingsBookedByDay');
+   const { meetingsBookedByDay = {} } = await chrome.storage.local.get('meetingsBookedByDay');
    const todaysBookedMeetings = meetingsBookedByDay[await getSelectedDay()] || [];
-   const { bookedMeetings: bookedMeetingTitles } = await chrome.storage.sync.get('bookedMeetings');
+   const { bookedMeetings: bookedMeetingTitles = {} } = await chrome.storage.local.get(
+      'bookedMeetings',
+   );
 
+   console.log({ meetings, todaysBookedMeetings, bookedMeetingTitles });
    const aggregatedMeetings = getAggregatedMeetings(
       meetings,
       todaysBookedMeetings,
@@ -93,7 +96,7 @@ export async function storeJiraSettings(data: SettingsFormValues) {
 
 export async function getIssueKeyForMeetingName(meetingTitle: string) {
    try {
-      const { bookedMeetings = {} } = await chrome.storage.sync.get(['bookedMeetings']);
+      const { bookedMeetings = {} } = await chrome.storage.local.get(['bookedMeetings']);
       if (Object.keys(bookedMeetings).includes(meetingTitle)) {
          return bookedMeetings[meetingTitle];
       }
@@ -105,13 +108,13 @@ export async function getIssueKeyForMeetingName(meetingTitle: string) {
 }
 
 export async function saveIssueKeyForMeetingName(meeting: string, issue: string) {
-   const { bookedMeetings } = await chrome.storage.sync.get('bookedMeetings');
+   const { bookedMeetings = {} } = await chrome.storage.local.get('bookedMeetings');
    bookedMeetings[meeting] = issue;
-   await chrome.storage.sync.set({ bookedMeetings });
+   await chrome.storage.local.set({ bookedMeetings });
 }
 
 export async function clearBookedMeetings() {
-   await chrome.storage.sync.set({ bookedMeetings: {} });
+   await chrome.storage.local.set({ bookedMeetings: {} });
 }
 
 export async function createHash(message: string): Promise<string> {

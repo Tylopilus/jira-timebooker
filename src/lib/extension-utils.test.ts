@@ -1,4 +1,6 @@
+import { Meeting } from '@/content';
 import { test } from 'vitest';
+import * as sampleData from '../test/sampleData';
 import {
    addMeetingBookedByDay,
    createHash,
@@ -8,8 +10,6 @@ import {
    getSelectedDay,
    parseCalenderDateString,
 } from './extension-utils';
-import * as sampleData from '../test/sampleData';
-import { Meeting } from '@/content';
 
 describe('extension-utils', () => {
    test('should create a hash', async () => {
@@ -63,6 +63,10 @@ describe('extension-utils', () => {
       vi.stubGlobal('chrome', {
          storage: {
             sync: {
+               get: meetingsBookedByDayFn,
+               set: setMeetingsBookedByDayFn,
+            },
+            local: {
                get: meetingsBookedByDayFn,
                set: setMeetingsBookedByDayFn,
             },

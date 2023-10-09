@@ -47,6 +47,19 @@ beforeAll(() => {
             }),
             set: vi.fn(async () => {}),
          },
+         local: {
+            get: vi.fn(async (msg) => {
+               switch (true) {
+                  case msg === 'meetingsBookedByDay': {
+                     return { meetingsBookedByDay: { '10/4/2023': todaysMeetings } };
+                  }
+                  case msg === 'bookedMeetings': {
+                     return { bookedMeetings: bookedMeetingTitles };
+                  }
+               }
+            }),
+            set: vi.fn(async () => {}),
+         },
       },
    };
 
