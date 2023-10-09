@@ -3,8 +3,10 @@ import {
    addMeetingBookedByDay,
    createHash,
    getAggregatedMeetings,
+   getLocaleFromDocument,
    getMeetingsFromCal,
    getSelectedDay,
+   parseCalenderDateString,
 } from './extension-utils';
 import * as sampleData from '../test/sampleData';
 import { Meeting } from '@/content';
@@ -82,5 +84,30 @@ describe('extension-utils', () => {
       expect(setMeetingsBookedByDayFn).toHaveBeenCalledWith({
          meetingsBookedByDay: { '01/4/2023': ['1', '2'] },
       });
+   });
+
+   test('parseCalendarDatString', async () => {
+      type referenceDatesType = { date: string; locale: keyof typeof import('date-fns/locale') };
+      const referenceDates: Array<referenceDatesType> = [
+         { date: '10, October, 2023', locale: 'enUS' },
+         { date: '10, Oktober, 2023', locale: 'de' },
+      ];
+      const date = new Date('10. October 2023 9:00').toISOString();
+      for await (const referenceDate of referenceDates) {
+         const parsedDate = await parseCalenderDateString(
+            referenceDate.date,
+            '9:00',
+            referenceDate.locale,
+         );
+         expect(parsedDate).toEqual(date);
+      }
+   });
+
+   test('getLocaleFromDocument', () => {
+      expect(getLocaleFromDocument('de')).toEqual('de');
+      expect(getLocaleFromDocument('en')).toEqual('enUS');
+      expect(getLocaleFromDocument('en-US')).toEqual('enUS');
+      expect(getLocaleFromDocument('en-CA')).toEqual('enCA');
+      expect(() => getLocaleFromDocument('de-DE')).toThrowError();
    });
 });

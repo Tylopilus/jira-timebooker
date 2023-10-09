@@ -1,7 +1,9 @@
-import { createHash, getIssueKeyForMeetingName } from '@/lib/extension-utils';
-import parse from 'date-fns/parse';
-import * as dateLocales from 'date-fns/locale';
-
+import {
+   createHash,
+   parseCalenderDateString,
+   getIssueKeyForMeetingName,
+   getLocaleFromDocument,
+} from '@/lib/extension-utils';
 console.info('chrome-ext template-react-ts content script');
 
 export {};
@@ -17,20 +19,6 @@ export type Meeting = {
    pending: boolean;
 };
 
-async function generateIsoString(date: string, time: string): Promise<string> {
-   const docLang = document.documentElement.lang.split('-')[0] as keyof typeof dateLocales;
-   const dateRef = document
-      .querySelector('#leftPaneContainer')!
-      .querySelector('[aria-selected=true] button')!
-      .getAttribute('aria-label')!;
-   const parsedDateString = parse([dateRef, time].join(' '), 'dd, MMMM, yyyy HH:mm', new Date(), {
-      locale: dateLocales[docLang],
-   }).toISOString();
-   // const isoDate = new Date([date, time].join(' ')).toISOString();
-   // console.log(parsedDateString === isoDate);
-   return parsedDateString;
-}
-
 async function getMeetings(): Promise<Meeting[]> {
    const meetingElements = [...document.querySelectorAll('div[role=button][class^=root]')];
    if (!meetingElements.length) throw new Error('No meetings found');
@@ -41,8 +29,9 @@ async function getMeetings(): Promise<Meeting[]> {
          const start = matchedLabel ? matchedLabel[1] : '00:00';
          const end = matchedLabel ? matchedLabel[2] : '00:00';
          const date = getSelectedDay();
-         const startTime = await generateIsoString(date, start);
-         const endTime = await generateIsoString(date, end);
+         const locale = getLocaleFromDocument(document.documentElement.lang);
+         const startTime = await parseCalenderDateString(date, start, locale);
+         const endTime = await parseCalenderDateString(date, end, locale);
          const title = el.getAttribute('title')?.split('\n')[0].trim() ?? 'No title';
          const id = await createHash([title, startTime, endTime].join(''));
          const ticketMatch = title.match(/\w+-\d+\s/i);
@@ -65,7 +54,10 @@ async function getMeetings(): Promise<Meeting[]> {
 }
 
 function getSelectedDay(): string {
-   const date = document.querySelector('.YjxmP.zVmbM')?.textContent || new Date().toDateString();
+   const date = document
+      .querySelector('#leftPaneContainer')!
+      .querySelector('[aria-selected=true] button')!
+      .getAttribute('aria-label')!;
    return date;
 }
 

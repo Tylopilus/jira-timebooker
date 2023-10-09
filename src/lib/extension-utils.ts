@@ -1,4 +1,6 @@
 import { SettingsFormValues } from '@/options/Options';
+import parse from 'date-fns/parse';
+import * as dateLocales from 'date-fns/locale';
 import { Meeting } from '../content';
 import { JiraIssue, searchJiraIssue } from './jira';
 
@@ -133,4 +135,31 @@ export async function addLastUsedIssue(issue: Pick<JiraIssue, 'key'>) {
    const jiraIssue = await searchJiraIssue({ query: issue.key });
    const newIssues = [jiraIssue[0], ...lastUsedIssues.filter((i) => i.key !== jiraIssue[0].key)];
    return chrome.storage.local.set({ lastUsedIssues: newIssues });
+}
+
+export async function parseCalenderDateString(
+   date: string,
+   time: string,
+   locale: keyof typeof dateLocales,
+): Promise<string> {
+   const parsedDateString = parse([date, time].join(' '), 'dd, MMMM, yyyy HH:mm', new Date(), {
+      locale: dateLocales[locale],
+   }).toISOString();
+   return parsedDateString;
+}
+
+export function getLocaleFromDocument(lang: string): keyof typeof dateLocales {
+   let _lang = lang
+      .split('-')
+      .map((item, idx) => (idx > 0 ? item.toUpperCase() : item))
+      .join('');
+   if (_lang === 'en') {
+      _lang = 'enUS';
+   }
+
+   const locales = Object.keys(dateLocales);
+   if (!locales.includes(_lang as keyof typeof dateLocales)) {
+      throw new Error(`Locale ${_lang} not found`);
+   }
+   return _lang as keyof typeof dateLocales;
 }
