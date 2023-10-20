@@ -166,3 +166,9 @@ export function getLocaleFromDocument(lang: string): keyof typeof dateLocales {
    }
    return _lang as keyof typeof dateLocales;
 }
+
+export function roundTimeToNearestMinutes(date: Date, minutes: number) {
+   const ms = 1000 * 60 * minutes; // convert minutes to ms
+   const roundedDate = new Date(Math.ceil(date.getTime() / ms) * ms);
+   return roundedDate;
+}

@@ -3,13 +3,14 @@ import { useQuery } from '@tanstack/react-query';
 import { getLastUsedIssues } from './extension-utils';
 
 async function getJiraOptions(): Promise<SettingsFormValues> {
-   const { email, jiraBaseUrl, jiraToken, jiraDefaultTicket } = await chrome.storage.sync.get([
+   const jiraOptions = (await chrome.storage.sync.get([
       'email',
       'jiraBaseUrl',
       'jiraToken',
       'jiraDefaultTicket',
-   ]);
-   return { email, jiraBaseUrl, jiraToken, jiraDefaultTicket };
+      'jiraRoundUpTo15min',
+   ])) as SettingsFormValues;
+   return jiraOptions;
 }
 
 export type JiraIssue = {

@@ -9,6 +9,7 @@ import {
    getMeetingsFromCal,
    getSelectedDay,
    parseCalenderDateString,
+   roundTimeToNearestMinutes,
 } from './extension-utils';
 
 describe('extension-utils', () => {
@@ -29,7 +30,7 @@ describe('extension-utils', () => {
          sampleData.bookedMeetingTitles,
       );
 
-      expect(aggregatedMeetings).toHaveLength(3);
+      expect(aggregatedMeetings).toHaveLength(4);
       expect(aggregatedMeetings[0].id).toEqual('1');
       expect(aggregatedMeetings[0].booked).toEqual(true);
       expect(aggregatedMeetings[0].ticket).toEqual('TICKET-1');
@@ -44,7 +45,7 @@ describe('extension-utils', () => {
       // await e;
       const meetings = await getMeetingsFromCal();
 
-      expect(meetings).toHaveLength(3);
+      expect(meetings).toHaveLength(4);
       expect(meetings[0].id).toEqual('1');
       expect(meetings[0].booked).toEqual(true);
       expect(meetings[0].ticket).toEqual('TICKET-1');
@@ -113,5 +114,14 @@ describe('extension-utils', () => {
       expect(getLocaleFromDocument('en-US')).toEqual('enUS');
       expect(getLocaleFromDocument('en-CA')).toEqual('enCA');
       expect(() => getLocaleFromDocument('de-DE')).toThrowError();
+   });
+
+   test('roundTimeToNearestMinutes', () => {
+      for (const meeting of sampleData.meetings) {
+         const roundedDate = roundTimeToNearestMinutes(new Date(meeting.endTime), 15);
+         expect(roundedDate.toISOString()).toMatch(
+            /:00:00.000Z$|:15:00.000Z$|:30:00.000Z$|:45:00.000Z$/,
+         );
+      }
    });
 });

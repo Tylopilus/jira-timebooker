@@ -18,6 +18,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { toast } from '@/components/ui/use-toast';
 import { storeJiraSettings } from '@/lib/extension-utils';
 import { Loader2 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 
 function App() {
    return (
@@ -42,6 +43,7 @@ const settingsFormSchema = z.object({
    jiraToken: z.string().min(1, { message: 'Please enter a valid token' }).optional(),
    jiraBaseUrl: z.string().url({ message: 'Please enter a valid url' }),
    jiraDefaultTicket: z.string().regex(/\w-\d/i, { message: 'Please enter a valid ticket' }),
+   jiraRoundUpTo15min: z.boolean(),
 });
 
 export type SettingsFormValues = z.infer<typeof settingsFormSchema>;
@@ -51,12 +53,14 @@ const defaultValues = async (): Promise<SettingsFormValues> => {
       'jiraToken',
       'jiraBaseUrl',
       'jiraDefaultTicket',
+      'jiraRoundUpTo15min',
    ]);
    return {
       email: settings?.email || undefined,
       jiraToken: settings?.jiraToken || undefined,
       jiraBaseUrl: settings?.jiraBaseUrl || '',
       jiraDefaultTicket: settings?.jiraDefaultTicket || '',
+      jiraRoundUpTo15min: settings?.jiraRoundUpTo15min || false,
    };
 };
 function SettingsForm() {
@@ -153,6 +157,22 @@ function SettingsForm() {
                            This is the default issue id to book on if no issue id could be inferred.
                         </FormDescription>
                         <FormMessage />
+                     </FormItem>
+                  )}
+               />
+               <FormField
+                  name='jiraRoundUpTo15min'
+                  render={({ field }) => (
+                     <FormItem className='flex flex-row items-start space-x-3 space-y-0'>
+                        <FormControl>
+                           <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                        <div className='space-y-1 leading-none'>
+                           <FormLabel>Round time prior to booking</FormLabel>
+                           <FormDescription>
+                              Use this setting if only multiples of 15 minutes are to be booked.
+                           </FormDescription>
+                        </div>
                      </FormItem>
                   )}
                />

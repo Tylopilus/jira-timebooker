@@ -32,6 +32,17 @@ const meetings = [
       booked: false,
       pending: false,
    },
+   {
+      id: '4',
+      startTime: '2023-10-04T09:00:00.000Z',
+      endTime: '2023-10-04T11:10:00.000Z',
+      start: '11:00',
+      end: '13:10',
+      title: 'ticket-123 setup local repo',
+      ticket: 'TICKET-123',
+      booked: false,
+      pending: false,
+   },
 ];
 const todaysMeetings = ['1', '3'];
 const bookedMeetingTitles = { 'Meeting 1': 'TICKET-1', 'ticket-123 setup local repo': 'TICKET-3' };
