@@ -4,15 +4,16 @@ import {
    getIssueKeyForMeetingName,
    getLocaleFromDocument,
 } from '@/lib/extension-utils';
+import { differenceInMilliseconds } from 'date-fns';
 console.info('chrome-ext template-react-ts content script');
 
-export {};
 export type Meeting = {
    id: string;
    startTime: string;
    endTime: string;
    start: string;
    end: string;
+   duration: string;
    title: string;
    ticket: string;
    booked: boolean;
@@ -32,6 +33,7 @@ async function getMeetings(): Promise<Meeting[]> {
          const locale = getLocaleFromDocument(document.documentElement.lang);
          const startTime = await parseCalenderDateString(date, start, locale);
          const endTime = await parseCalenderDateString(date, end, locale);
+         const duration = String(differenceInMilliseconds(new Date(endTime), new Date(startTime)));
          const title = el.getAttribute('title')?.split('\n')[0].trim() ?? 'No title';
          const id = await createHash([title, startTime, endTime].join(''));
          const ticketMatch = title.match(/\w+-\d+\s/i);
@@ -41,6 +43,7 @@ async function getMeetings(): Promise<Meeting[]> {
             id,
             startTime,
             endTime,
+            duration,
             start,
             end,
             title,

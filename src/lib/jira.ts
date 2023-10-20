@@ -66,6 +66,7 @@ type BookTimeOnIssueProps = {
    startTime: string;
    endTime: string;
    title: string;
+   durationInMS: number;
 };
 
 export async function bookTimeOnIssue(props: BookTimeOnIssueProps) {
@@ -95,8 +96,7 @@ export async function bookTimeOnIssue(props: BookTimeOnIssueProps) {
             version: 1,
          },
          started: props.startTime.replace('Z', '+0000'),
-         timeSpentSeconds:
-            (new Date(props.endTime).getTime() - new Date(props.startTime).getTime()) / 1000,
+         timeSpentSeconds: String(props.durationInMS / 1000),
       }),
    });
    if (res.status === 201) {
@@ -121,4 +121,13 @@ export function useJiraSearch(s: string) {
       keepPreviousData: true,
       staleTime: 5 * 60 * 1000,
    });
+}
+
+export function useRoundUp() {
+   const jiraOptions = useQuery(['jiraOptions'], getJiraOptions, {
+      refetchOnMount: false,
+      keepPreviousData: true,
+      staleTime: 5 * 60 * 1000,
+   });
+   return jiraOptions.data?.jiraRoundUpTo15min;
 }

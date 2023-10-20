@@ -172,3 +172,27 @@ export function roundTimeToNearestMinutes(date: Date, minutes: number) {
    const roundedDate = new Date(Math.ceil(date.getTime() / ms) * ms);
    return roundedDate;
 }
+
+export function round24hStringToNearestMinutes(timeStr: string, minutes: number): string {
+   const [hours, minute] = timeStr.split(':');
+
+   const roundedMinutes = Math.ceil(+minute / minutes) * minutes;
+   const date = new Date(0, 0, 0, +hours, roundedMinutes);
+
+   const roundedTimeString = `${date.getHours().toString().padStart(2, '0')}:${date
+      .getMinutes()
+      .toString()
+      .padEnd(2, '0')}`;
+   return roundedTimeString;
+}
+
+export function isDurationDivisibleByMinutes(durationInMs: number, minutes: number): boolean {
+   const meetingDurationInMinutes = durationInMs / 1000 / 60;
+   return meetingDurationInMinutes % minutes === 0;
+}
+
+export function roundDurationToNearestMinutes(durationInMs: number, minutes: number): number {
+   const meetingDurationInMinutes = durationInMs / 1000 / 60;
+   const roundedDurationInMinutes = Math.ceil(meetingDurationInMinutes / minutes) * minutes;
+   return roundedDurationInMinutes * 60 * 1000;
+}

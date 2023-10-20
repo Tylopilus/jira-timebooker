@@ -8,7 +8,10 @@ import {
    getLocaleFromDocument,
    getMeetingsFromCal,
    getSelectedDay,
+   isDurationDivisibleByMinutes,
    parseCalenderDateString,
+   round24hStringToNearestMinutes,
+   roundDurationToNearestMinutes,
    roundTimeToNearestMinutes,
 } from './extension-utils';
 
@@ -122,6 +125,24 @@ describe('extension-utils', () => {
          expect(roundedDate.toISOString()).toMatch(
             /:00:00.000Z$|:15:00.000Z$|:30:00.000Z$|:45:00.000Z$/,
          );
+      }
+   });
+
+   test('round24hStringToNearestMinutes', () => {
+      expect(round24hStringToNearestMinutes('08:50', 15)).toEqual('09:00');
+      expect(round24hStringToNearestMinutes('10:50', 15)).toEqual('11:00');
+      expect(round24hStringToNearestMinutes('10:00', 15)).toEqual('10:00');
+      expect(round24hStringToNearestMinutes('10:15', 15)).toEqual('10:15');
+      expect(round24hStringToNearestMinutes('10:16', 15)).toEqual('10:30');
+      expect(round24hStringToNearestMinutes('23:46', 15)).toEqual('00:00');
+   });
+
+   test('roundDurationToNearestMinutes', () => {
+      for (const meeting of sampleData.meetings) {
+         const { duration } = meeting;
+         const adjustedDuration = roundDurationToNearestMinutes(Number(duration), 15);
+
+         expect(isDurationDivisibleByMinutes(adjustedDuration, 15)).toEqual(true);
       }
    });
 });

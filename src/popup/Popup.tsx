@@ -25,13 +25,15 @@ import {
    addMeetingBookedByDay,
    getMeetingsFromCal,
    getSelectedDay,
+   isDurationDivisibleByMinutes,
    openOptionsPage,
+   roundDurationToNearestMinutes,
    saveIssueKeyForMeetingName,
 } from '@/lib/extension-utils';
-import { bookTimeOnIssue, useJiraSearch } from '@/lib/jira';
-import { useDebounce } from '@/lib/utils';
+import { bookTimeOnIssue, useJiraSearch, useRoundUp } from '@/lib/jira';
+import { cn, useDebounce } from '@/lib/utils';
 import { Loader2, Search, Send, Settings } from 'lucide-react';
-import { ReactElement, useEffect, useState, useTransition } from 'react';
+import { ReactElement, useEffect, useRef, useState, useTransition } from 'react';
 
 function App() {
    const [items, setItems] = useState<Meeting[]>();
@@ -56,6 +58,7 @@ function App() {
             startTime: meeting.startTime,
             endTime: meeting.endTime,
             title: meeting.title,
+            durationInMS: +meeting.duration,
          });
          updateMeeting(meeting, { pending: false, booked: true });
          const selectedDay = await getSelectedDay();
@@ -171,6 +174,7 @@ function IssueEntry({
    updateMeeting: (meeting: Meeting, update?: Partial<Meeting>) => Promise<void>;
    bookMeeting: (meeting: Meeting) => Promise<void>;
 }): ReactElement {
+   const meetingDurationRef = useRef(meeting.duration);
    const [open, setOpen] = useState(false);
    const [isUpdating, setUpdating] = useState(false);
    const [, startTransition] = useTransition();
@@ -180,6 +184,13 @@ function IssueEntry({
    const { isFetching, data } = useJiraSearch(debouncedValue);
    const [edit, setEdit] = useState(false);
 
+   const roundUpToFull15Minutes = useRoundUp();
+   const shouldRoundUp =
+      (roundUpToFull15Minutes && !isDurationDivisibleByMinutes(+meeting.duration, 15)) || false;
+   if (shouldRoundUp) {
+      meetingDurationRef.current = roundDurationToNearestMinutes(+meeting.duration, 15).toString();
+   }
+   console.log(meeting);
    return (
       <div className='flex justify-between'>
          <div className='w-full'>
@@ -215,9 +226,39 @@ function IssueEntry({
                   {meeting.title}
                </Button>
             )}
-            <p className='text-sm text-muted-foreground'>
-               {meeting.start}h - {meeting.end}h
-            </p>
+            {shouldRoundUp ? (
+               <Tooltip>
+                  <TooltipTrigger asChild>
+                     <p
+                        className={cn(
+                           {
+                              'border-b border-dashed cursor-help border-primary': shouldRoundUp,
+                           },
+                           'text-sm text-muted-foreground max-w-min whitespace-nowrap',
+                        )}
+                     >
+                        {meeting.start}h - {meeting.end}h
+                     </p>
+                  </TooltipTrigger>
+                  <TooltipContent side='bottom'>
+                     <p>
+                        Duration of Meeting does not round to 15 minutes. Booked time will be
+                        adjusted
+                     </p>
+                  </TooltipContent>
+               </Tooltip>
+            ) : (
+               <p
+                  className={cn(
+                     {
+                        'border-b border-dashed cursor-help border-primary': shouldRoundUp,
+                     },
+                     'text-sm text-muted-foreground max-w-min whitespace-nowrap',
+                  )}
+               >
+                  {meeting.start}h - {meeting.end}h
+               </p>
+            )}
          </div>
          <div className='flex items-center gap-2'>
             <Popover open={open} onOpenChange={setOpen}>
@@ -272,7 +313,7 @@ function IssueEntry({
                      disabled={meeting.booked || isUpdating}
                      onClick={async () => {
                         setUpdating(true);
-                        await bookMeeting(meeting);
+                        await bookMeeting({ ...meeting, duration: meetingDurationRef.current });
                         startTransition(() => setUpdating(false));
                      }}
                   >
