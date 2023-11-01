@@ -3,7 +3,7 @@ import { defineManifest } from '@crxjs/vite-plugin';
 export default defineManifest({
    name: 'jira timebooker',
    description: 'Enables you to book time in your jira based on your meetings in outlook calendar',
-   version: '1.0.1',
+   version: '1.0.2',
    manifest_version: 3,
    icons: {
       '16': 'img/icon16.png',
