@@ -93,6 +93,43 @@ function App() {
          }),
       );
    }
+
+   const Duration = () => {
+      const cummulatedMinutes = items?.reduce(
+         (acc, item) => {
+            if (item.booked) {
+               acc.booked += +item.duration / 1000 / 60;
+            }
+            acc.total += +item.duration / 1000 / 60;
+            return acc;
+            // const totalMinutes = acc + +item.duration / 1000 / 60;
+            // return totalMinutes;
+            // if (item.booked) {
+            //    return acc + +item.duration;
+            // }
+            // return acc;
+         },
+         { total: 0, booked: 0 },
+      );
+      const totalMinutes = cummulatedMinutes?.total;
+      const totalBookedMinutes = cummulatedMinutes?.booked || 0;
+      if (!totalMinutes) return null;
+      const totalHours = Math.floor(totalMinutes / 60);
+      const minutes = Math.floor(totalMinutes % 60);
+      const bookedHours = Math.floor(totalBookedMinutes / 60);
+      const bookedMinutes = Math.floor(totalBookedMinutes % 60);
+      return (
+         <>
+            <span className='text-primary'>
+               {bookedHours}h {bookedMinutes}m
+            </span>
+            <span>
+               {' '}
+               / {totalHours.toFixed(0)}h {minutes.toFixed(0)}m
+            </span>
+         </>
+      );
+   };
    return (
       <main className='mx-auto px-2 min-w-[600px] my-4 max-w-[600px]'>
          <Card>
@@ -101,7 +138,8 @@ function App() {
                   <div className='flex-col space-y-1.5 '>
                      <CardTitle>Jira Timebookings</CardTitle>
                      <CardDescription>
-                        Get the times from your meetings and book them in Jira
+                        Get the times from your meetings and book them in Jira <br />
+                        <Duration />
                      </CardDescription>
                   </div>
 
