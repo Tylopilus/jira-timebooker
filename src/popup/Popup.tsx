@@ -60,14 +60,14 @@ function App() {
             title: meeting.title,
             durationInMS: +meeting.duration,
          });
-         updateMeeting(meeting, { pending: false, booked: true });
+         await updateMeeting(meeting, { pending: false, booked: true });
          const selectedDay = await getSelectedDay();
-         addMeetingBookedByDay(selectedDay, meeting);
-         addLastUsedIssue({
+         await addMeetingBookedByDay(selectedDay, meeting);
+         await addLastUsedIssue({
             key: meeting.ticket,
          });
 
-         saveIssueKeyForMeetingName(meeting.title, meeting.ticket);
+         await saveIssueKeyForMeetingName(meeting.title, meeting.ticket);
          toast({
             title: 'Success',
             description: `Booked ${meeting.title} on ${meeting.ticket}`,
@@ -147,10 +147,10 @@ function App() {
                <Button
                   onClick={async () => {
                      setUpdating(true);
-                     await Promise.allSettled(
-                        items?.map((meeting) => (meeting.booked ? null : bookMeeting(meeting))) ??
-                           [],
-                     );
+                     for (const meeting of items ?? []) {
+                        if (meeting.booked) continue;
+                        await bookMeeting(meeting);
+                     }
                      startTransition(() => setUpdating(false));
                   }}
                >
@@ -190,7 +190,6 @@ function IssueEntry({
    if (shouldRoundUp) {
       meetingDurationRef.current = roundDurationToNearestMinutes(+meeting.duration, 15).toString();
    }
-   console.log(meeting);
    return (
       <div className='flex justify-between'>
          <div className='w-full'>
