@@ -32,7 +32,7 @@ import {
 } from '@/lib/extension-utils';
 import { bookTimeOnIssue, useJiraSearch, useRoundUp } from '@/lib/jira';
 import { cn, useDebounce } from '@/lib/utils';
-import { Loader2, Search, Send, Settings } from 'lucide-react';
+import { Loader2, Search, Send, Settings, CalendarOff } from 'lucide-react';
 import { ReactElement, useEffect, useRef, useState, useTransition } from 'react';
 
 function App() {
@@ -152,7 +152,7 @@ function App() {
                   onClick={async () => {
                      setUpdating(true);
                      for (const meeting of items ?? []) {
-                        if (meeting.booked) continue;
+                        if (meeting.booked || meeting.disgarded) continue;
                         await bookMeeting(meeting);
                      }
                      startTransition(() => setUpdating(false));
@@ -223,7 +223,7 @@ function IssueEntry({
                <Button
                   variant={'link'}
                   size={'default'}
-                  className='px-0 justify-start text-left'
+                  className='px-0 justify-start text-left py-0 h-auto'
                   onClick={() => setEdit(true)}
                >
                   {meeting.title}
@@ -268,7 +268,7 @@ function IssueEntry({
                <PopoverTrigger asChild>
                   <Button
                      variant='outline'
-                     disabled={meeting.booked}
+                     disabled={meeting.booked || meeting.disgarded}
                      className='w-[140px] justify-center'
                   >
                      {meeting.ticket}
@@ -313,7 +313,7 @@ function IssueEntry({
                   <Button
                      variant={'ghost'}
                      className='p-2'
-                     disabled={meeting.booked || isUpdating}
+                     disabled={meeting.booked || isUpdating || meeting.disgarded}
                      onClick={async () => {
                         setUpdating(true);
                         await bookMeeting({ ...meeting, duration: meetingDurationRef.current });
@@ -331,6 +331,15 @@ function IssueEntry({
                   <p>Book time on ticket</p>
                </TooltipContent>
             </Tooltip>
+            <Button
+               variant={'ghost'}
+               className='p-2'
+               onClick={() => {
+                  updateMeeting(meeting, { disgarded: !meeting.disgarded });
+               }}
+            >
+               <CalendarOff className='h-4 w-4' />
+            </Button>
          </div>
       </div>
    );
@@ -338,6 +347,7 @@ function IssueEntry({
 function Duration({ meetings }: { meetings: Meeting[] | undefined }) {
    const cummulatedMinutes = meetings?.reduce(
       (acc, meeting) => {
+         if (meeting.disgarded) return acc;
          if (meeting.booked) {
             acc.booked += +meeting.duration / 1000 / 60;
          }

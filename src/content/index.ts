@@ -18,6 +18,7 @@ export type Meeting = {
    ticket: string;
    booked: boolean;
    pending: boolean;
+   disgarded: boolean;
 };
 
 async function getMeetings(): Promise<Meeting[]> {
@@ -50,6 +51,7 @@ async function getMeetings(): Promise<Meeting[]> {
             ticket,
             booked: false,
             pending: false,
+            disgarded: false,
          };
       }),
    );
