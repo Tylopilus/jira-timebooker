@@ -32,7 +32,7 @@ import {
 } from '@/lib/extension-utils';
 import { bookTimeOnIssue, useJiraSearch, useRoundUp } from '@/lib/jira';
 import { cn, useDebounce } from '@/lib/utils';
-import { Loader2, Search, Send, Settings, CalendarOff } from 'lucide-react';
+import { CalendarOff, Loader2, Search, Send, Settings } from 'lucide-react';
 import { ReactElement, useEffect, useRef, useState, useTransition } from 'react';
 
 function App() {
@@ -41,8 +41,6 @@ function App() {
    const [, startTransition] = useTransition();
 
    useEffect(() => {
-      // getMeetingsFromCal(setItems);
-
       const getMeetings = async () => {
          const meetings = await getMeetingsFromCal();
          setItems(meetings);
@@ -124,7 +122,7 @@ function App() {
                </div>
             </CardHeader>
             <CardContent className='p-4 pr-2'>
-               <div className='card-content space-y-6 max-h-[380px] min-h-[300px] overflow-y-auto'>
+               <div className='card-content space-y-6 max-h-[380px] min-h-[300px] overflow-y-scroll'>
                   {items?.map((item) => (
                      <IssueEntry
                         meeting={item}
@@ -136,15 +134,6 @@ function App() {
                </div>
             </CardContent>
             <CardFooter className='justify-between pt-4 p-4 pr-6'>
-               {/* <Button
-                  variant={'secondary'}
-                  onClick={() => {
-                     // clearLastUsedIssues();
-                     clearBookedMeetings();
-                  }}
-               >
-                  Reset all
-               </Button> */}
                <div>
                   <Duration meetings={items} />
                </div>
@@ -152,7 +141,7 @@ function App() {
                   onClick={async () => {
                      setUpdating(true);
                      for (const meeting of items ?? []) {
-                        if (meeting.booked || meeting.disgarded) continue;
+                        if (meeting.booked || meeting.discarded) continue;
                         await bookMeeting(meeting);
                      }
                      startTransition(() => setUpdating(false));
@@ -268,7 +257,7 @@ function IssueEntry({
                <PopoverTrigger asChild>
                   <Button
                      variant='outline'
-                     disabled={meeting.booked || meeting.disgarded}
+                     disabled={meeting.booked || meeting.discarded}
                      className='w-[140px] justify-center'
                   >
                      {meeting.ticket}
@@ -313,7 +302,7 @@ function IssueEntry({
                   <Button
                      variant={'ghost'}
                      className='p-2'
-                     disabled={meeting.booked || isUpdating || meeting.disgarded}
+                     disabled={meeting.booked || isUpdating || meeting.discarded}
                      onClick={async () => {
                         setUpdating(true);
                         await bookMeeting({ ...meeting, duration: meetingDurationRef.current });
@@ -331,15 +320,22 @@ function IssueEntry({
                   <p>Book time on ticket</p>
                </TooltipContent>
             </Tooltip>
-            <Button
-               variant={'ghost'}
-               className='p-2'
-               onClick={() => {
-                  updateMeeting(meeting, { disgarded: !meeting.disgarded });
-               }}
-            >
-               <CalendarOff className='h-4 w-4' />
-            </Button>
+            <Tooltip>
+               <TooltipTrigger asChild>
+                  <Button
+                     variant={'ghost'}
+                     className='p-2'
+                     onClick={() => {
+                        updateMeeting(meeting, { discarded: !meeting.discarded });
+                     }}
+                  >
+                     <CalendarOff className='h-4 w-4' />
+                  </Button>
+               </TooltipTrigger>
+               <TooltipContent>
+                  <p>Discard this entry</p>
+               </TooltipContent>
+            </Tooltip>
          </div>
       </div>
    );
@@ -347,7 +343,7 @@ function IssueEntry({
 function Duration({ meetings }: { meetings: Meeting[] | undefined }) {
    const cummulatedMinutes = meetings?.reduce(
       (acc, meeting) => {
-         if (meeting.disgarded) return acc;
+         if (meeting.discarded) return acc;
          if (meeting.booked) {
             acc.booked += +meeting.duration / 1000 / 60;
          }

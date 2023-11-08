@@ -16,6 +16,7 @@ const meetings: Meeting[] = [
       ticket: 'TICKET-1',
       booked: false,
       pending: false,
+      discarded: false,
    },
    {
       id: '2',
@@ -28,6 +29,7 @@ const meetings: Meeting[] = [
       ticket: 'TICKET-2',
       booked: false,
       pending: false,
+      discarded: false,
    },
    {
       id: '3',
@@ -40,6 +42,7 @@ const meetings: Meeting[] = [
       ticket: 'TICKET-123',
       booked: false,
       pending: false,
+      discarded: false,
    },
    {
       id: '4',
@@ -52,6 +55,7 @@ const meetings: Meeting[] = [
       ticket: 'TICKET-123',
       booked: false,
       pending: false,
+      discarded: false,
    },
 ];
 const todaysMeetings = ['1', '3'];
