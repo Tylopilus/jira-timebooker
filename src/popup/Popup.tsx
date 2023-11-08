@@ -94,42 +94,6 @@ function App() {
       );
    }
 
-   const Duration = () => {
-      const cummulatedMinutes = items?.reduce(
-         (acc, item) => {
-            if (item.booked) {
-               acc.booked += +item.duration / 1000 / 60;
-            }
-            acc.total += +item.duration / 1000 / 60;
-            return acc;
-            // const totalMinutes = acc + +item.duration / 1000 / 60;
-            // return totalMinutes;
-            // if (item.booked) {
-            //    return acc + +item.duration;
-            // }
-            // return acc;
-         },
-         { total: 0, booked: 0 },
-      );
-      const totalMinutes = cummulatedMinutes?.total;
-      const totalBookedMinutes = cummulatedMinutes?.booked || 0;
-      if (!totalMinutes) return null;
-      const totalHours = Math.floor(totalMinutes / 60);
-      const minutes = Math.floor(totalMinutes % 60);
-      const bookedHours = Math.floor(totalBookedMinutes / 60);
-      const bookedMinutes = Math.floor(totalBookedMinutes % 60);
-      return (
-         <>
-            <span className='text-primary'>
-               {bookedHours}h {bookedMinutes}m
-            </span>
-            <span>
-               {' '}
-               / {totalHours.toFixed(0)}h {minutes.toFixed(0)}m
-            </span>
-         </>
-      );
-   };
    return (
       <main className='mx-auto px-2 min-w-[600px] my-4 max-w-[600px]'>
          <Card>
@@ -138,8 +102,7 @@ function App() {
                   <div className='flex-col space-y-1.5 '>
                      <CardTitle>Jira Timebookings</CardTitle>
                      <CardDescription>
-                        Get the times from your meetings and book them in Jira <br />
-                        <Duration />
+                        Get the times from your meetings and book them in Jira
                      </CardDescription>
                   </div>
 
@@ -161,7 +124,7 @@ function App() {
                </div>
             </CardHeader>
             <CardContent className='p-4 pr-2'>
-               <div className='space-y-6 max-h-[380px] min-h-[300px] overflow-y-auto'>
+               <div className='card-content space-y-6 max-h-[380px] min-h-[300px] overflow-y-auto'>
                   {items?.map((item) => (
                      <IssueEntry
                         meeting={item}
@@ -172,7 +135,7 @@ function App() {
                   ))}
                </div>
             </CardContent>
-            <CardFooter className='justify-end pt-4'>
+            <CardFooter className='justify-between pt-4 p-4 pr-6'>
                {/* <Button
                   variant={'secondary'}
                   onClick={() => {
@@ -182,6 +145,9 @@ function App() {
                >
                   Reset all
                </Button> */}
+               <div>
+                  <Duration meetings={items} />
+               </div>
                <Button
                   onClick={async () => {
                      setUpdating(true);
@@ -367,5 +333,38 @@ function IssueEntry({
             </Tooltip>
          </div>
       </div>
+   );
+}
+function Duration({ meetings }: { meetings: Meeting[] | undefined }) {
+   const cummulatedMinutes = meetings?.reduce(
+      (acc, meeting) => {
+         if (meeting.booked) {
+            acc.booked += +meeting.duration / 1000 / 60;
+         }
+         acc.total += +meeting.duration / 1000 / 60;
+         return acc;
+      },
+      { total: 0, booked: 0 },
+   );
+   const totalMinutes = cummulatedMinutes?.total;
+   const totalBookedMinutes = cummulatedMinutes?.booked || 0;
+   if (!totalMinutes) return null;
+   const totalHours = Math.floor(totalMinutes / 60);
+   const minutes = Math.floor(totalMinutes % 60);
+   const bookedHours = Math.floor(totalBookedMinutes / 60);
+   const bookedMinutes = Math.floor(totalBookedMinutes % 60);
+
+   return (
+      <>
+         <div className='font-semibold leading-none tracking-tight text-sm'>
+            Time booked <span className='text-muted-foreground font-normal'>(calendar)</span>
+         </div>
+         <span className='text-primary text-sm'>
+            {bookedHours.toString().padStart(2, '0')}h:{bookedMinutes.toString().padStart(2, '0')}m
+         </span>{' '}
+         <span className='text-muted-foreground text-sm'>
+            ({totalHours.toString().padStart(2, '0')}h:{minutes.toString().padStart(2, '0')}m)
+         </span>
+      </>
    );
 }

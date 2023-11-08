@@ -46,8 +46,7 @@ export async function searchJira(_props: SearchProps): Promise<Array<JiraIssue>>
       const searchParam = `summary ~ "${props.query}"`;
       url = url.concat(searchParam);
    }
-   console.log({ url });
-   return fetch(url, {
+   const result = await fetch(url, {
       headers: {
          'Content-Type': 'application/json',
          Authorization: `Basic ${btoa(`${props.email}:${props.jiraToken}`)}`,
@@ -56,9 +55,31 @@ export async function searchJira(_props: SearchProps): Promise<Array<JiraIssue>>
       },
    })
       .then((res) => res.json())
-      .then((res) => {
+      .then((res): JiraIssue[] => {
          return res.issues || [];
       });
+
+   const lastUsedIssues = await getLastUsedIssues();
+
+   const searchWords = props.query.split(' ');
+
+   const filteredIssues = lastUsedIssues.filter((issue) => {
+      const summaryWords = issue.fields.summary.split(' ');
+      return searchWords.every((word) => {
+         return (
+            summaryWords.some((summaryWord) =>
+               summaryWord.toLowerCase().includes(word.toLowerCase()),
+            ) || issue.key.toLowerCase().includes(word.toLowerCase())
+         );
+      });
+   });
+
+   const mergedIssues = [
+      ...filteredIssues,
+      ...result.filter((issue) => !filteredIssues.find((i) => i.key === issue.key)),
+   ];
+
+   return mergedIssues;
 }
 
 type BookTimeOnIssueProps = {
