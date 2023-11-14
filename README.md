@@ -24,10 +24,10 @@
 -  Click book all button to book all tickets in the list
 
 ## Installing
-1. Download from Chromse Store:
+* Download from Chromse Store:
    * [Chrome Web Store - Jira Timebooker](https://chrome.google.com/webstore/detail/jira-timebooker/coajlkpopecaebmmmecpjamaoofgjjgc)
 
-1. set your Chrome browser 'Developer mode' up
+* Alternatively for preview builds: Set your Chrome browser 'Developer mode' up
 
 -  Option 1: Use the prepacked build
 
