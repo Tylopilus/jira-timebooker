@@ -3,6 +3,7 @@ import {
    parseCalenderDateString,
    getIssueKeyForMeetingName,
    getLocaleFromDocument,
+   formatTo24HourFormat,
 } from '@/lib/extension-utils';
 import { differenceInMilliseconds } from 'date-fns';
 console.info('chrome-ext template-react-ts content script');
@@ -27,9 +28,12 @@ async function getMeetings(): Promise<Meeting[]> {
 
    const meetings: Meeting[] = await Promise.all(
       meetingElements.map(async (el): Promise<Meeting> => {
-         const matchedLabel = el.ariaLabel?.match(/(\d{2}:\d{2}).*(\d{2}:\d{2})/i);
-         const start = matchedLabel ? matchedLabel[1] : '00:00';
-         const end = matchedLabel ? matchedLabel[2] : '00:00';
+         const matchedLabel = el.ariaLabel?.match(
+            /([01]?[0-9]|2[0-3]):([0-5][0-9]) ?([APMapm]{2})?/g,
+         );
+         const start = matchedLabel ? formatTo24HourFormat(matchedLabel[0]) : '00:00';
+         console.log({ matchedLabel });
+         const end = matchedLabel ? formatTo24HourFormat(matchedLabel[1]) : '00:00';
          const date = getSelectedDay();
          const locale = getLocaleFromDocument(document.documentElement.lang);
          const startTime = await parseCalenderDateString(date, start, locale);

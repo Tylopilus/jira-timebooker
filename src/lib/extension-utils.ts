@@ -3,6 +3,7 @@ import * as dateLocales from 'date-fns/locale';
 import parse from 'date-fns/parse';
 import { Meeting } from '../content';
 import { JiraIssue, searchJiraIssue } from './jira';
+import format from 'date-fns/format';
 
 export function getAggregatedMeetings(
    meetings: Meeting[],
@@ -140,14 +141,41 @@ export async function addLastUsedIssue(issue: Pick<JiraIssue, 'key'>) {
    return chrome.storage.local.set({ lastUsedIssues: newIssues });
 }
 
+export function createTimeObject(timeString: string): Date {
+   const date = new Date();
+
+   const [hoursStr, minutesPeriod] = timeString.split(':');
+   const [minutesStr, period] = minutesPeriod.split(' ');
+
+   const hours = parseInt(hoursStr, 10);
+   const minutes = parseInt(minutesStr, 10);
+
+   const adjustedHours = period === 'PM' && hours < 12 ? hours + 12 : hours;
+
+   date.setHours(adjustedHours);
+   date.setMinutes(minutes);
+
+   return date;
+}
+
+export function formatTo24HourFormat(timeString: string): string {
+   const date = new Date(`2023 ${timeString}`);
+   return format(date, 'HH:mm');
+}
+
 export async function parseCalenderDateString(
    date: string,
    time: string,
    locale: keyof typeof dateLocales,
 ): Promise<string> {
-   const parsedDateString = parse([date, time].join(' '), 'dd, MMMM, yyyy HH:mm', new Date(), {
-      locale: dateLocales[locale],
-   }).toISOString();
+   const parsedDateString = parse(
+      [date, formatTo24HourFormat(time)].join(' '),
+      'dd, MMMM, yyyy HH:mm',
+      new Date(),
+      {
+         locale: dateLocales[locale],
+      },
+   ).toISOString();
    return parsedDateString;
 }
 
