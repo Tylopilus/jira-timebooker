@@ -29,7 +29,7 @@ async function getMeetings(): Promise<Meeting[]> {
    const meetings: Meeting[] = await Promise.all(
       meetingElements.map(async (el): Promise<Meeting> => {
          const matchedLabel = el.ariaLabel?.match(
-            /([01]?[0-9]|2[0-3]):([0-5][0-9]) ?([APMapm]{2})?/g,
+            /([01]?[0-9]|2[0-3]):([0-5][0-9]) ?([APap][Mm])?/g,
          );
          const start = matchedLabel ? formatTo24HourFormat(matchedLabel[0]) : '00:00';
          console.log({ matchedLabel });
@@ -58,7 +58,10 @@ async function getMeetings(): Promise<Meeting[]> {
             discarded: false,
          };
       }),
-   );
+   ).catch((err) => {
+      console.log(err);
+      return [];
+   });
    return meetings;
 }
 

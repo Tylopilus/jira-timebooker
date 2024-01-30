@@ -18,6 +18,13 @@ export type JiraIssue = {
    key: string;
    fields: {
       summary: string;
+      labels?: string[];
+      issuetype?: {
+         name: string;
+      };
+      status?: {
+         name: string;
+      };
    };
 };
 
@@ -134,6 +141,31 @@ export async function searchJiraIssue(props: SearchProps): Promise<Array<JiraIss
       fields: { summary: issue.fields.summary },
    }));
    return res;
+}
+
+async function getIssueDetails(issueId: string): Promise<JiraIssue> {
+   const jiraOptions = await getJiraOptions();
+   const res = await fetch(`${jiraOptions.jiraBaseUrl}/rest/api/3/issue/${issueId}`, {
+      headers: {
+         'Content-Type': 'application/json',
+         Authorization: `Basic ${btoa(`${jiraOptions.email}:${jiraOptions.jiraToken}`)}`,
+         Accept: 'application/json',
+         'X-Atlassian-Token': 'no-check',
+      },
+   });
+   if (res.status === 200) {
+      return res.json();
+   }
+   throw new Error(await res.json());
+}
+
+export function useIssueDetails(issueId: string): JiraIssue | undefined {
+   return useQuery(['issueDetails', issueId], () => getIssueDetails(issueId), {
+      enabled: !!issueId,
+      refetchOnMount: false,
+      keepPreviousData: true,
+      staleTime: 5 * 60 * 1000,
+   }).data;
 }
 
 export function useJiraSearch(s: string) {

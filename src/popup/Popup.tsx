@@ -14,6 +14,7 @@ import {
    CommandItem,
    CommandList,
 } from '@/components/ui/command';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Toaster } from '@/components/ui/toaster';
@@ -30,7 +31,7 @@ import {
    roundDurationToNearestMinutes,
    saveIssueKeyForMeetingName,
 } from '@/lib/extension-utils';
-import { bookTimeOnIssue, useJiraSearch, useRoundUp } from '@/lib/jira';
+import { bookTimeOnIssue, useIssueDetails, useJiraSearch, useRoundUp } from '@/lib/jira';
 import { cn, useDebounce } from '@/lib/utils';
 import { CalendarOff, Loader2, Search, Send, Settings } from 'lucide-react';
 import { ReactElement, useEffect, useRef, useState, useTransition } from 'react';
@@ -93,11 +94,11 @@ function App() {
    }
 
    return (
-      <main className='mx-auto px-2 min-w-[600px] my-4 max-w-[600px]'>
+      <main className='mx-auto my-4 min-w-[600px] max-w-[600px] px-2'>
          <Card>
             <CardHeader className='p-4 pr-2'>
-               <div className='flex justify-between items-center'>
-                  <div className='flex-col space-y-1.5 '>
+               <div className='flex items-center justify-between'>
+                  <div className='flex-col space-y-1.5'>
                      <CardTitle>Jira Timebookings</CardTitle>
                      <CardDescription>
                         Get the times from your meetings and book them in Jira
@@ -112,7 +113,7 @@ function App() {
                            }}
                            variant={'ghost'}
                         >
-                           <Settings className='h-4 w-4 mr-2' /> Options
+                           <Settings className='mr-2 h-4 w-4' /> Options
                         </Button>
                      </TooltipTrigger>
                      <TooltipContent>
@@ -122,7 +123,7 @@ function App() {
                </div>
             </CardHeader>
             <CardContent className='p-4 pr-2'>
-               <div className='card-content space-y-6 max-h-[380px] min-h-[300px] overflow-y-scroll'>
+               <div className='card-content max-h-[380px] min-h-[300px] space-y-6 overflow-y-scroll'>
                   {items?.map((item) => (
                      <IssueEntry
                         meeting={item}
@@ -133,7 +134,7 @@ function App() {
                   ))}
                </div>
             </CardContent>
-            <CardFooter className='justify-between pt-4 p-4 pr-6'>
+            <CardFooter className='justify-between p-4 pr-6 pt-4'>
                <div>
                   <Duration meetings={items} />
                </div>
@@ -147,7 +148,7 @@ function App() {
                      startTransition(() => setUpdating(false));
                   }}
                >
-                  {isUpdating ? <Loader2 className='h-4 w-4 mr-2 animate-spin' /> : null} Book all
+                  {isUpdating ? <Loader2 className='mr-2 h-4 w-4 animate-spin' /> : null} Book all
                </Button>
             </CardFooter>
          </Card>
@@ -169,6 +170,7 @@ function IssueEntry({
 }): ReactElement {
    const meetingDurationRef = useRef(meeting.duration);
    const [open, setOpen] = useState(false);
+   const [hoverCardState, setHoverCardState] = useState(false);
    const [isUpdating, setUpdating] = useState(false);
    const [, startTransition] = useTransition();
 
@@ -176,6 +178,7 @@ function IssueEntry({
    const debouncedValue = useDebounce<string>(search, 500);
    const { isFetching, data } = useJiraSearch(debouncedValue);
    const [edit, setEdit] = useState(false);
+   const issueDetails = useIssueDetails(meeting.ticket);
 
    const roundUpToFull15Minutes = useRoundUp();
    const shouldRoundUp =
@@ -205,14 +208,14 @@ function IssueEntry({
                            setEdit(false);
                         }
                      }}
-                     className='p-0 font-medium shadow-none border-0 focus-visible:ring-0 focus-visible:border-b focus-visible:border-primary'
+                     className='border-0 p-0 font-medium shadow-none focus-visible:border-b focus-visible:border-primary focus-visible:ring-0'
                   />
                </div>
             ) : (
                <Button
                   variant={'link'}
                   size={'default'}
-                  className='px-0 justify-start text-left py-0 h-auto'
+                  className='h-auto justify-start px-0 py-0 text-left'
                   onClick={() => setEdit(true)}
                >
                   {meeting.title}
@@ -253,50 +256,62 @@ function IssueEntry({
             )}
          </div>
          <div className='flex items-center gap-2'>
-            <Popover open={open} onOpenChange={setOpen}>
-               <PopoverTrigger asChild>
-                  <Button
-                     variant='outline'
-                     disabled={meeting.booked || meeting.discarded}
-                     className='w-[140px] justify-center'
-                  >
-                     {meeting.ticket}
-                  </Button>
-               </PopoverTrigger>
-               <PopoverContent className='p-0' side='bottom' align='start'>
-                  <Command>
-                     <div className='flex items-center border-b px-3'>
-                        <Search className='mr-2 h-4 w-4 shrink-0 opacity-50' />
-                        <Input
-                           className={
-                              'flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 border-none focus-visible:ring-0'
-                           }
-                           value={search}
-                           onChange={(e) => setSearch(e.target.value)}
-                           placeholder='Search issue...'
-                        />
-                        {isFetching && <Loader2 className='h-4 w-4 animate-spin' />}
-                     </div>
-                     <CommandList className='max-h-[180px]'>
-                        <CommandEmpty>No results found.</CommandEmpty>
-                        <CommandGroup>
-                           {data &&
-                              data.map((item) => (
-                                 <CommandItem
-                                    key={item.id}
-                                    onSelect={() => {
-                                       updateMeeting(meeting, { ticket: item.key });
-                                       setOpen(false);
-                                    }}
-                                 >
-                                    {item.key} - {item.fields.summary}
-                                 </CommandItem>
-                              ))}
-                        </CommandGroup>
-                     </CommandList>
-                  </Command>
-               </PopoverContent>
-            </Popover>
+            <HoverCard onOpenChange={setHoverCardState} open={hoverCardState && !open}>
+               <HoverCardTrigger>
+                  <Popover open={open} onOpenChange={setOpen}>
+                     <PopoverTrigger asChild>
+                        <Button
+                           variant='outline'
+                           disabled={meeting.booked || meeting.discarded}
+                           className={`w-[140px] justify-center ${
+                              issueDetails?.fields.status?.name === 'Closed' ? 'text-red-500' : null
+                           }`}
+                        >
+                           {meeting.ticket}
+                        </Button>
+                     </PopoverTrigger>
+                     <PopoverContent className='p-0' side='bottom' align='start'>
+                        <Command>
+                           <div className='flex items-center border-b px-3'>
+                              <Search className='mr-2 h-4 w-4 shrink-0 opacity-50' />
+                              <Input
+                                 className={
+                                    'flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 border-none focus-visible:ring-0'
+                                 }
+                                 value={search}
+                                 onChange={(e) => setSearch(e.target.value)}
+                                 placeholder='Search issue...'
+                              />
+                              {isFetching && <Loader2 className='h-4 w-4 animate-spin' />}
+                           </div>
+                           <CommandList className='max-h-[180px]'>
+                              <CommandEmpty>No results found.</CommandEmpty>
+                              <CommandGroup>
+                                 {data &&
+                                    data.map((item) => (
+                                       <CommandItem
+                                          key={item.id}
+                                          onSelect={() => {
+                                             updateMeeting(meeting, { ticket: item.key });
+                                             setOpen(false);
+                                          }}
+                                       >
+                                          {item.key} - {item.fields.summary}
+                                       </CommandItem>
+                                    ))}
+                              </CommandGroup>
+                           </CommandList>
+                        </Command>
+                     </PopoverContent>
+                  </Popover>
+               </HoverCardTrigger>
+               <HoverCardContent>
+                  <h2>{issueDetails?.fields.summary}</h2>
+                  <p>{issueDetails?.fields.issuetype?.name}</p>
+                  <span>{issueDetails?.fields.labels?.join(',')}</span>
+                  <p>{issueDetails?.fields.status?.name}</p>
+               </HoverCardContent>
+            </HoverCard>
             <Tooltip>
                <TooltipTrigger asChild>
                   <Button
@@ -362,13 +377,13 @@ function Duration({ meetings }: { meetings: Meeting[] | undefined }) {
 
    return (
       <>
-         <div className='font-semibold leading-none tracking-tight text-sm'>
-            Time booked <span className='text-muted-foreground font-normal'>(calendar)</span>
+         <div className='text-sm font-semibold leading-none tracking-tight'>
+            Time booked <span className='font-normal text-muted-foreground'>(calendar)</span>
          </div>
-         <span className='text-primary text-sm'>
+         <span className='text-sm text-primary'>
             {bookedHours.toString().padStart(2, '0')}h:{bookedMinutes.toString().padStart(2, '0')}m
          </span>{' '}
-         <span className='text-muted-foreground text-sm'>
+         <span className='text-sm text-muted-foreground'>
             ({totalHours.toString().padStart(2, '0')}h:{minutes.toString().padStart(2, '0')}m)
          </span>
       </>
